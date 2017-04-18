@@ -6,9 +6,9 @@ shinyUI(fluidPage(
   
   # Application title
   tags$h2("Reducing the administrative burden on researchers"),
-  p("Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., only papers in last five years) and researchers waste a lot of time formating papers. ",
+  p("Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
     "This page takes an ", tags$a(href="https://orcid.org/content/orcid-public-data-file", "ORCID ID"), ' and outputs a researcher`s papers in multiple potential formats to suit whatever the funder needs. ',
-    "No funder should ever need to ask a researcher to paste their papers into Word or some other horrible web form. ", 
+    "No funder should ever need to ask a researcher to paste their papers into an application form. ", 
     "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement.', sep=''),
   
   sidebarLayout(
@@ -17,7 +17,7 @@ shinyUI(fluidPage(
                 label = "ORCID ID (16 digits with 3 dashes)",
                 value='0000-0001-6339-0374'),
                  
-                numericInput(inputId = "years.since",
+      numericInput(inputId = "years.since",
                               label = "Earliest year of papers",
                               min = 1970,
                               max = 2017,
@@ -27,9 +27,16 @@ shinyUI(fluidPage(
       numericInput(inputId = "max.authors",
                    label = "Maximum number of authors",
                    min = 1,
-                   max = 100,
+                   max = 50,
                    step = 1,
                    value = 3),
+      
+      radioButtons(inputId = "order", 
+                     label = "Order papers by:",
+                     choices = c("Ascending year" = "ayear",
+                                 "Descending year" = "dyear",
+                                 "Journal name" = "journal"), 
+                     selected = 'ayear'),
       
       checkboxGroupInput(inputId = "variable", 
                          label = "What to show:",

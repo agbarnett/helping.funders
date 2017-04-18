@@ -8,7 +8,7 @@ library(stringr)
 
 #orcid.id ='0000-0002-2358-2440'
 
-orcid = function(orcid.id='0000-0002-2358-2440', max.authors=3, years.since=2000){
+orcid = function(orcid.id='0000-0002-2358-2440', max.authors=3, years.since=2000, order.by='ayear'){
   ret = list() # start with blank output
   
   # 0) verify ORCID and flag problems
@@ -105,16 +105,21 @@ orcid = function(orcid.id='0000-0002-2358-2440', max.authors=3, years.since=2000
   
   # filter on years again because of missing years
   papers = filter(papers, Year >= years.since)
-  papers = arrange(papers, -Year) # sort
-  
-  papers$Authors = as.character(papers$Authors) # 
-  papers$Title = as.character(papers$Title)
-  papers$Journal = as.character(papers$Journal)
-  papers$Year = as.character(papers$Year) # looks better as character
   
   # remove duplicates
   dups = duplicated(papers$Title)
   papers = papers[!dups,]
+  
+  # order by
+  if(order.by=='ayear'){papers = arrange(papers, -Year)} #
+  if(order.by=='dyear'){papers = arrange(papers, Year)} # 
+  if(order.by=='journal'){papers = arrange(papers, Journal, Year)} # 
+
+  # for appearances
+  papers$Authors = as.character(papers$Authors) # 
+  papers$Title = as.character(papers$Title)
+  papers$Journal = as.character(papers$Journal)
+  papers$Year = as.character(papers$Year) # looks better as character
   
   # return
   ret$name = name
