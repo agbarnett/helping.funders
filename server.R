@@ -1,18 +1,13 @@
-# for ORCID
-# March 2017
-library(shiny)
-library(tidyverse)
-library(knitr)
-library(rmarkdown)
-library(dplyr)
+# for Google Scholar
+# May 2017
 
 shinyServer(function(input, output) {
   
-  source('orcid.R')
+  source('scholar.R')
   
   # reactive function to run chart
   results <- function(){
-    results = orcid(orcid.id=input$orcid.id, max.authors=input$max.authors, years.since=input$years.since, order.by=input$order)
+    results = scholar(scholar.id=input$google.id, max.authors=input$max.authors, years.since=input$years.since, order.by=input$order)
     results
   }
   
@@ -24,6 +19,7 @@ shinyServer(function(input, output) {
     }
     if(dim(results()$papers)[1] > 0){
       paste('Researcher = ', results()$name, '.\n',
+            'Affiliation = ', results()$affiliation, '.\n',
             'Number of papers = ', nrow(results()$papers), '.', sep='')
     }
   })

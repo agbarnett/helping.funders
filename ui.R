@@ -1,21 +1,21 @@
-# ORCID
-# March 2017
+# Scholar version
+# May 2017
 library(shiny)
 
 shinyUI(fluidPage(
   
   # Application title
   tags$h2("Reducing the administrative burden on researchers"),
-  p("Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
-    "This page takes an ", tags$a(href="https://orcid.org/content/orcid-public-data-file", "ORCID ID"), ' and outputs a researcher`s papers in multiple potential formats to suit whatever the funder needs. ',
-    "No funder should ever need to ask a researcher to paste their papers into an application form. ", 
-    "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement.', sep=''),
+  p("WORK IN PROGRESS. Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
+    "This page takes a ", tags$a(href="https://scholar.google.com.au/", "Google Scholar ID"), ' and outputs a researcher`s papers in multiple potential formats to suit whatever the funder needs. There may be a slight delay whilst the data is extracted from Google Scholar.'),
+    p("No funder should ever need to ask a researcher to paste their papers into an application form. ", 
+    "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement.'),
   
   sidebarLayout(
     sidebarPanel(
-      textInput(inputId = "orcid.id",
-                label = "ORCID ID (16 digits with 3 dashes)",
-                value='0000-0001-6339-0374'),
+      textInput(inputId = "google.id",
+                label = "Google Scholar ID (12 characters)",
+                value='lhc97roAAAAJ'),
                  
       numericInput(inputId = "years.since",
                               label = "Earliest year of papers",
@@ -52,6 +52,7 @@ shinyUI(fluidPage(
     ), # end of sidebar panel
     
     mainPanel(
+      h3('Researcher'),
       textOutput(outputId = 'h_text'),
       h3('List of papers'),
       tableOutput(outputId = 'table')

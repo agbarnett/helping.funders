@@ -1,0 +1,7 @@
+library(shiny)
+library(tidyverse)
+library(scholar)
+library(stringr)
+library(knitr)
+library(rmarkdown)
+library(dplyr)
