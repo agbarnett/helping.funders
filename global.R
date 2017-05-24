@@ -1,6 +1,6 @@
 library(shiny)
 library(tidyverse)
-library(scholar)
+library(rorcid)
 library(stringr)
 library(knitr)
 library(rmarkdown)

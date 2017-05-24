@@ -1,15 +1,18 @@
-# for Google Scholar
+# for ORCID
 # May 2017
 
 shinyServer(function(input, output) {
   
-  source('scholar.R')
+  source('orcid.R')
   
   # reactive function to run chart
-  results <- function(){
-    results = scholar(scholar.id=input$google.id, max.authors=input$max.authors, years.since=input$years.since, order.by=input$order)
-    results
-  }
+  results <- reactive({
+    validate(
+      need(nchar(input$orcid.id) == 19, 
+           paste("ORCID IDs should be 16 numbers separated by three dashes, e.g., 0000-0002-2358-2440", sep=''))
+    )
+    orcid(orcid.id=input$orcid.id, max.authors=input$max.authors, years.since=input$years.since, order.by=input$order)
+  })
   
   # basic details:
   output$h_text <- renderText({
@@ -19,7 +22,6 @@ shinyServer(function(input, output) {
     }
     if(dim(results()$papers)[1] > 0){
       paste('Researcher = ', results()$name, '.\n',
-            'Affiliation = ', results()$affiliation, '.\n',
             'Number of papers = ', nrow(results()$papers), '.', sep='')
     }
   })

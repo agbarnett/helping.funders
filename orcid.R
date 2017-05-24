@@ -2,9 +2,6 @@
 # Take ORCID ID and make a list of papers
 # Version for shiny
 # March 2017
-library(tidyverse)
-library(rorcid)
-library(stringr)
 
 #orcid.id ='0000-0002-2358-2440'
 
