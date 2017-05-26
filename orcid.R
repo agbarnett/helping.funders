@@ -1,28 +1,20 @@
 # orcid.R
 # Take ORCID ID and make a list of papers
+# use rcrossref to get better formatted data
 # Version for shiny
-# March 2017
+# May 2017
 
-#orcid.id ='0000-0002-2358-2440'
+# to do, make a matrix of authors
 
-orcid = function(orcid.id='0000-0002-2358-2440', max.authors=3, years.since=2000, order.by='ayear'){
+# orcid.id ='0000-0003-3637-2423' # Anisa
+# orcid.id ='0000-0002-2358-2440' # ginny 
+# orcid.id ='0000-0001-6339-0374' # me
+
+# years.since=2000, 
+orcid = function(orcid.id='0000-0002-2358-2440'){
   ret = list() # start with blank output
   
-  # 0) verify ORCID and flag problems
-  fail = FALSE; problem='' # flag for failure
-  dashes = str_count(orcid.id, '-')
-  if(dashes>3){fail=T; problem='Too many dashes in ORCID ID'}
-  if(dashes<3){fail=T; problem='Too few dashes in ORCID ID'}
-  numbers = str_count(orcid.id, '[0-9]')
-  if(numbers>16){fail=T; problem='Too many numbers in ORCID ID'}
-  if(numbers<16){fail=T; problem='Too few numbers in ORCID ID'}
-  if(fail==T){
-    ret$name = problem
-    ret$papers = data.frame(NULL)
-  }
-  
   # a) select person
-  if(fail==F){
   bio = orcid_id(orcid = orcid.id, profile='profile') # get basics
   name = paste(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,
                bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value)
@@ -30,101 +22,154 @@ orcid = function(orcid.id='0000-0002-2358-2440', max.authors=3, years.since=2000
   # b) select works
   w = orcid_id(orcid = orcid.id, profile='works') # get works
   d = w[[1]]$works # get tibble
-  d$`publication-date.year.value` = as.numeric(d$`publication-date.year.value`)
+  d = arrange(d, `work-citation.work-citation-type`) # put bibtex higher for later duplicates
+  # do not filter on year; do filtering on shiny server page instead as it is faster
   
-  # c) restrict to selected years; include missing years (filtered below)
-  d = filter(d, is.na(`publication-date.year.value`) ==T | `publication-date.year.value` >= years.since)
+  # c) removed duplicates
+  titles = tolower(d$`work-title.title.value`) # get all the titles
+  titles = gsub("\\.|,|:|?|!|\\'", '', titles) # remove simple punctuation to be able to better match titles
+  index = duplicated(titles)
+  d = d[!index,]
   
-  # d) format papers
-  # split by type (bibtex or not)
-  missing = filter(d, is.na(`work-citation.work-citation-type`))
-  others = filter(d, `work-citation.work-citation-type` != 'BIBTEX')
-  bib = filter(d, `work-citation.work-citation-type` == 'BIBTEX')
-  papers = NULL
-  if(nrow(bib)>0){
+  # d1) separate to those with DOIs and those without
+  if(nrow(d)>0){
+    DOIs = other = NULL
+    for (i in 1:nrow(d)){
+      to.check = d$`work-external-identifiers.work-external-identifier`[[i]]
+      if(is.null(to.check)==T){
+#        cat('i=',i,'\n')
+        other = rbind(other, d[i,]) # add to other
+      }
+      if(is.null(to.check)==F){
+        doi = subset(to.check, `work-external-identifier-type`=='DOI')$`work-external-identifier-id.value` # extract DOI
+        if(length(doi)==0){ # if no DOI available then use PMID
+          pmid = subset(to.check, `work-external-identifier-type`=='PMID')$`work-external-identifier-id.value`
+          if(length(pmid) > 0){doi = id_converter(pmid, type='pmid')$records$doi} # does not always work
+          if(is.null(doi) ==T){ # if still not luck try PMC
+            pcmid = subset(to.check, `work-external-identifier-type`=='PMC')$`work-external-identifier-id.value`
+            if(length(pcmid) > 0){doi = id_converter(pcmid, type='pmcid')$records$doi}
+          }
+        }
+        if(length(doi)==0){ # if no DOI available then add to 'other' frame
+          other = rbind(other, d[i,])
+        }
+        if(length(doi)!=0){ # if DOI available ...
+          DOIs = c(DOIs, doi) # ... concatenate
+        }
+      }
+    }
+    
+    # d2) now get better formatted data for papers with a DOIs using crossref
+    cdata.nonbibtex = cr_works(DOIs)$data
+  } # end of if
+  
+  # d3) separate other papers into bibtex and not
+  bib = NULL
+  if(is.null(other)==F){
+    bib = filter(other, `work-citation.work-citation-type` == "BIBTEX")
+    other = filter(other, `work-citation.work-citation-type` != "BIBTEX" | is.na(`work-citation.work-citation-type`))
+  }
+  
+  ### e) format papers with separate matrix for authors ###
+  papers = bib.authors = NULL
+  # e1) first bibtex papers
+  if(is.null(bib) == F){
+    bib.authors = matrix(data='', nrow=nrow(bib), ncol=200) # start with huge matrix
     for (k in 1:nrow(bib)){ # loop needed
-      r = gsub('\\}', '', bib$`work-citation.citation`[k]) # remove closing curly
-      r = strsplit(r, split='\\{|,') # now split on opening curly or comma
+      # journal
       journal = as.character(bib$`journal-title.value`[k])
-      # remove anything in brackets for journal
       cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
       if(cut.start>0){journal = substr(journal, 1, cut.start-2)}
+      # title
       title = as.character(bib$`work-title.title.value`[k])
       year = as.numeric(bib$`publication-date.year.value`[k])
-      a.start = grep('author =', r[[1]])+1 # start index for authors
-      a.end = min(length(r[[1]]), a.start+max.authors) # end index for authors; maximum number of aithors
-      authors = paste(r[[1]][a.start:a.end], collapse = '') # find authors
-      frame = data.frame(Authors=authors, Journal=journal, Title=title, Year=year)
+      # volume
+      r = bib$`work-citation.citation`[k]
+      index = gregexpr(pattern='volume = \\{', r)[[1]][1] # find volume
+      r = str_sub(r, index+10, index+10+20) # now take next short bit of text (maximum 20 for volume number)
+      index = gregexpr(pattern='\\}', r)[[1]][1] # find first closing curly brackets
+      volume = str_sub(r, 1, index-1)
+      # authors (use a separate matrix)
+      b.authors = bib$`work-contributors.contributor`[[k]]$`credit-name.value`
+      if(is.null(b.authors) == F){bib.authors[k, 1:length(b.authors)] = b.authors}
+      if(is.null(b.authors) == T){ # extract from bibtex
+        r = bib$`work-citation.citation`[k]
+        index = gregexpr(pattern='author = \\{', r)[[1]][1] # find start of authors
+        r = str_sub(r, index+10, nchar(r)) # now take next bit of text
+        index = gregexpr(pattern='\\}', r)[[1]][1] # find first closing curly brackets
+        b.authors = str_sub(r, 1, index-1)
+        b.authors = strsplit(b.authors, split = ' and ')[[1]] # split by and
+        bib.authors[k, 1:length(b.authors)] = b.authors
+      }
+      # type
+      type = bib$`work-type`[[k]]
+      # put it all together
+      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Type=type)
       papers = rbind(papers, frame)
     }
   }
-  # ... now for non bibtex
-  if(nrow(others)>0){
-    for (k in 1:nrow(others)){ # loop needed
-      r = others$`work-citation.citation`[k]
-      # authors
-      fauthors = others$`work-contributors.contributor`[k][[1]]$`credit-name.value`
-      m = min(max.authors, length(fauthors))
-      authors = paste(fauthors[1:m], collapse=' and ', sep='')
-      # year
-      year = others$`publication-date.year.value`[k]
+  # e2) ... now for non bibtex from crossref
+  authors.crossref = NULL
+  if(nrow(cdata.nonbibtex)>0){
+    authors.crossref = matrix(data='', nrow=nrow(cdata.nonbibtex), ncol=200) # start with huge matrix
+    for (k in 1:nrow(cdata.nonbibtex)){ # loop needed
+      # authors, convert from tibble
+      fauthors = cdata.nonbibtex$author[[k]]
+      if('given' %in% names(fauthors) == F){
+        fauthors = filter(fauthors, is.na(name)==F) # not missing
+        fauthors = paste(fauthors$name)
+      }
+      if('given' %in% names(fauthors)){
+        fauthors = filter(fauthors, is.na(family)==F) # not missing
+        fauthors = select(fauthors, given, family)
+        fauthors = paste(fauthors$given, fauthors$family) # does include NA - to fix
+      }
+      authors.crossref[k, 1:length(fauthors)] = fauthors
+      # year (convert dat, to do)
+      year = format(as.Date(cdata.nonbibtex$created[k]),'%Y') 
       ## journal
-      find.year = gregexpr(year, r)[[1]][1] # just first year
-      broken = strsplit(r, split=paste(' ', year, sep=''))[[1]] # break at year
-      journal = gsub(paste(fauthors, collapse='|', sep=''), '', broken[1])
-      journal = gsub(', |,$', '', journal) # tidy up
-      # remove anything in brackets for journal
-      cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
-      if(cut.start>0){journal = substr(journal, 1, cut.start-2)}
+      journal = cdata.nonbibtex$container.title[k] 
       # title
-      title = as.character(others$`work-title.title.value`[k])
-      frame = data.frame(Authors=authors, Journal=journal, Title=title, Year=year) # add volume?
+      title = as.character(cdata.nonbibtex$title[k])
+      # volume
+      volume = cdata.nonbibtex$volume[k]
+      # type
+      type = cdata.nonbibtex$type[k]
+      # put it all together
+      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Type=type) 
       papers = rbind(papers, frame)
     }
   }
-  # ... now for missing (crossref?)
-  if(nrow(missing)>0){
-    for (k in 1:nrow(missing)){ # loop needed
-      # authors
-      fauthors = missing$`work-contributors.contributor`[k][[1]]$`credit-name.value`
-      m = min(max.authors, length(fauthors))
-      authors = paste(fauthors[1:m], collapse=' and ', sep='')
-      # year
-      year = missing$`publication-date.year.value`[k]
-      # journal
-      journal = as.character(missing$`journal-title.value`[k]) 
-      # title
-      title = as.character(missing$`work-title.title.value`[k])
-      frame = data.frame(Authors=authors, Journal=journal, Title=title, Year=year) # add volume?
-      papers = rbind(papers, frame)
-    }
-  }
+  # e3) ... lastly try others
+  # to do
   
-  # filter on years again because of missing years
-  papers = filter(papers, Year >= years.since)
-  
-  # remove duplicates
+  # f) combine authors and remove empty columns
+  authors = rbind(bib.authors, authors.crossref)
+  fmin = min(which(colSums(authors=='') == nrow(authors))) # find first empty column
+  authors = authors[, 1:(fmin-1)]
+
+  # remove duplicates (again, just a safety net, should have been caught earlier)
   dups = duplicated(papers$Title)
   papers = papers[!dups,]
+  authors = authors[!dups,]
   
-  # order by
-  if(order.by=='ayear'){papers = arrange(papers, -Year)} #
-  if(order.by=='dyear'){papers = arrange(papers, Year)} # 
-  if(order.by=='journal'){papers = arrange(papers, Journal, Year)} # 
-
   # for appearances
-  papers$Authors = as.character(papers$Authors) # 
   papers$Title = as.character(papers$Title)
   papers$Journal = as.character(papers$Journal)
-  papers$Year = as.character(papers$Year) # looks better as character
+  if(class(papers$Year)=='factor'){
+    papers$Year = as.numeric(as.character(papers$Year))
+  }
+  if(class(papers$Volume)=='factor'){
+    papers$Volume = as.character(papers$Volume)
+  }
+  
+  ## need to remove/change special characters like: … and --
   
   # return
   ret$name = name
   ret$papers = papers
-  }
-  
+  ret$authors = authors # separate matrix so that authors can be selected
+
 # return
 return(ret)
 }
-
-# $`last-modified-date`$value

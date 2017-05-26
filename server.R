@@ -1,40 +1,61 @@
-# for ORCID
+# server for helping.funders
 # May 2017
 
 shinyServer(function(input, output) {
   
   source('orcid.R')
   
-  # reactive function to run chart
+  # reactive function to get publication data
   results <- reactive({
     validate(
       need(nchar(input$orcid.id) == 19, 
            paste("ORCID IDs should be 16 numbers separated by three dashes, e.g., 0000-0002-2358-2440", sep=''))
     )
-    orcid(orcid.id=input$orcid.id, max.authors=input$max.authors, years.since=input$years.since, order.by=input$order)
+    orcid(orcid.id=input$orcid.id)
   })
+  
+  # separate function to get filtered data?
   
   # basic details:
   output$h_text <- renderText({
-    # output or not:
-    if(dim(results()$papers)[1] == 0){
-      paste(results()$name, '.\n', sep='')
+    paste(results()$name, '.\n', sep='')
+    res = data.frame(NULL)
+    res = results()$papers
+    res = subset(res, Year>= input$years.since) # filter by year to give updated number of papers
+    # journal articles only
+    if(input$journal.only=='Yes'){
+      index = grep(pattern='journal', tolower(res$Type)) # search for journal in type
+      res = res[index, ]
     }
-    if(dim(results()$papers)[1] > 0){
-      paste('Researcher = ', results()$name, '.\n',
-            'Number of papers = ', nrow(results()$papers), '.', sep='')
-    }
+    paste('Researcher = ', results()$name, '.\n',
+            'Number of papers = ', nrow(res), '.', sep='')
+    # Add percent of first author papers?
   })
   
   # table of papers:
   output$table <- renderTable({
-    # output or not:
-    if(dim(results()$papers)[1] == 0){
-      res = data.frame(NULL)
+    res = data.frame(NULL)
+    res = results()$papers
+    # add authors
+    if(input$max.authors==1){res$Authors = results()$authors[,1]}
+    if(input$max.authors>1){
+      res$Authors = apply(results()$authors[, 1:input$max.authors], 1, paste, collapse= ' and ') # could make collapse another input
+    } 
+    # filter by year:
+    res = subset(res, Year>= input$years.since) 
+    # ordering 
+    res$Year = as.numeric(res$Year) # for sorting
+    if(input$order=='ayear'){res = arrange(res, -Year)} #
+    if(input$order=='dyear'){res = arrange(res, Year)} # 
+    if(input$order=='journal'){res = arrange(res, Journal, Year)} # 
+    res$Year = as.character(res$Year) # looks better as character
+    # journal articles only
+    if(input$journal.only=='Yes'){
+      index = grep(pattern='journal', tolower(res$Type)) # search for journal in type
+      res = res[index, ]
     }
-    if(dim(results()$papers)[1] > 0){
-      res = results()$papers[, input$variable] # select columns
-    }
+    # select columns and return
+    res = res[, input$variable] # select columns
     res
   })
   
