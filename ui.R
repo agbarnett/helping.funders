@@ -1,6 +1,5 @@
 # UI for helping.funders
 # May 2017
-library(shiny)
 
 shinyUI(fluidPage(
   
@@ -8,7 +7,7 @@ shinyUI(fluidPage(
   tags$h2("Reducing the administrative burden on researchers"),
   p("WORK IN PROGRESS. Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
     "This page takes a researcher`s ", tags$a(href="https://orcid.org/content/orcid-public-data-file", "ORCID ID"), ' and outputs their papers in alternative formats to suit what the funder wants. 
-    It also uses ', tags$a(href="https://www.crossref.org/", "crossref"), ' to source the publication data. It may take a while for the output to appear because of the use of multiple databases.'),
+    It uses ', tags$a(href="https://www.crossref.org/", "crossref"), ' to supplement the ORCID data. It may take a while for the output to appear because of the use of multiple databases.'),
 
   p("No funder should ever need to ask a researcher to paste their papers into an application form. ", 
     "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement.', sep=''),
@@ -42,23 +41,38 @@ shinyUI(fluidPage(
                                  "Journal name" = "journal"), 
                      selected = 'ayear'),
       
-      selectInput(inputId = "journal.only",
-                label = "What papers to include:",
-                choices = c("Journal articles only" = "Yes",
-                            "Everything" = "No"),
-                selected = "No"),
-      
       checkboxGroupInput(inputId = "variable", 
                          label = "What details to show:",
                          choices = c("Authors" = "Authors",
                            "Title" = "Title",
                            "Journal" = "Journal",
                            "Volume" = "Volume",
-                           "Year" = "Year"), 
+                           "Issue" = "Issue",
+                           "Page" = "Page",
+                           "Year" = "Year",
+                           "DOI" = "DOI"), 
                          selected = c('Title','Journal','Year')),
       
+      checkboxInput(inputId="additional", label="Show additional options:",
+                     value = FALSE, width='100%'),      
+      
+      conditionalPanel(
+        condition = "input.additional==1",
+        selectInput(inputId = "journal.only",
+                  label = "What papers to include:",
+                  choices = c("Journal articles only" = "Yes",
+                              "Everything" = "No"),
+                  selected = "No")),
+      
+      conditionalPanel(
+        condition = "input.additional==1",
+        textInput(inputId = "spacer",
+                label = "Space between authors",
+                value=', '))
+      
+      
       # download
-      downloadButton("report", "Generate report (not yet working)")
+      #downloadButton("report", "Generate report (not yet working)")
       
     ), # end of sidebar panel
     

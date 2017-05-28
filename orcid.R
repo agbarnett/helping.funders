@@ -4,13 +4,15 @@
 # Version for shiny
 # May 2017
 
-# to do, make a matrix of authors
+# to do, add DOI
+# to do, add ordering 
 
 # orcid.id ='0000-0003-3637-2423' # Anisa
 # orcid.id ='0000-0002-2358-2440' # ginny 
 # orcid.id ='0000-0001-6339-0374' # me
+# orcid.id = '0000-0002-2826-0627' # sonya
+# orcid.id = '0000-0002-5559-3267' # nick
 
-# years.since=2000, 
 orcid = function(orcid.id='0000-0002-2358-2440'){
   ret = list() # start with blank output
   
@@ -78,8 +80,17 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
     for (k in 1:nrow(bib)){ # loop needed
       # journal
       journal = as.character(bib$`journal-title.value`[k])
-      cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
-      if(cut.start>0){journal = substr(journal, 1, cut.start-2)}
+      if(is.na(journal)==F){
+        cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
+        if(cut.start>0){journal = substr(journal, 1, cut.start-2)}
+      }
+      if(is.na(journal)==T){
+        j = bib$`work-citation.citation`[k]
+        index = gregexpr(pattern='journal = \\{', j)[[1]][1] # find start of journal
+        j = str_sub(j, index+11, nchar(j)) # now take next bit of text
+        index = gregexpr(pattern='\\}', j)[[1]][1] # find first closing curly brackets
+        journal = str_sub(j, 1, index-1)
+      }
       # title
       title = as.character(bib$`work-title.title.value`[k])
       year = as.numeric(bib$`publication-date.year.value`[k])
@@ -104,7 +115,7 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       # type
       type = bib$`work-type`[[k]]
       # put it all together
-      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Type=type)
+      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=NA, Pages=NA, Type=type, DOI=NA)
       papers = rbind(papers, frame)
     }
   }
@@ -131,12 +142,16 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       journal = cdata.nonbibtex$container.title[k] 
       # title
       title = as.character(cdata.nonbibtex$title[k])
-      # volume
+      # volume/issue/pages
       volume = cdata.nonbibtex$volume[k]
+      issue = cdata.nonbibtex$issue[k]
+      pages = cdata.nonbibtex$page[k]
+      # doi
+      DOI = cdata.nonbibtex$DOI[k]
       # type
       type = cdata.nonbibtex$type[k]
       # put it all together
-      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Type=type) 
+      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=DOI) 
       papers = rbind(papers, frame)
     }
   }
@@ -149,10 +164,35 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   authors = authors[, 1:(fmin-1)]
 
   # remove duplicates (again, just a safety net, should have been caught earlier)
-  dups = duplicated(papers$Title)
+  dups = duplicated(tolower(papers$Title))
   papers = papers[!dups,]
   authors = authors[!dups,]
   
+  ## count first author papers
+  # make alternative versions of name
+  reverse = paste(bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, ', ',
+                  substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), '.', sep='')
+  simple = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), '. ', 
+        bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  s0 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), ' ', 
+                 bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  s1 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), '.[A-Z] ', 
+                 bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  s2 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), '. [A-Z] ', 
+             bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  s3 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), '. [A-Z]. ', 
+             bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  s4 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), '.[A-Z]. ', 
+             bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  s5 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), ' [A-Z] ', 
+             bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  middle  = paste(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value, ' [A-Z]. ', 
+                  bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  name.to.search = tolower(c(name, reverse, simple, s0, s1, s2, s3, s4, s5, middle))
+  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(authors[,1]))
+  papers$First.author = 0
+  papers$First.author[index] = 1
+
   # for appearances
   papers$Title = as.character(papers$Title)
   papers$Journal = as.character(papers$Journal)
