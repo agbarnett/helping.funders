@@ -4,15 +4,33 @@
 # Version for shiny
 # May 2017
 
+# add thanks to scott
 # to do, add DOI
-# to do, add ordering 
+# to do, add ordering? Maybe don't need with report 
+# to do, add progress bar http://shiny.rstudio.com/articles/progress.html 
 
+## Bayesian mixtures for modelling complex medical data
+# orcid.id = '0000-0002-9292-0773' # Nicole
 # orcid.id ='0000-0003-3637-2423' # Anisa
 # orcid.id ='0000-0002-2358-2440' # ginny 
 # orcid.id ='0000-0001-6339-0374' # me
 # orcid.id = '0000-0002-2826-0627' # sonya
 # orcid.id = '0000-0002-5559-3267' # nick
 
+# function for finding details in bibtex
+bibtex.search = function(input, pattern, length){
+  index = gregexpr(pattern=pattern, input)[[1]][1] # find issue
+  if(index>=0){ 
+    input = str_sub(input, index+length, nchar(input)) # now take next short bit of text (maximum 20 for volume number)
+    index = gregexpr(pattern='\\}', input)[[1]][1] # find first closing curly brackets
+    out = str_sub(input, 1, index-1)
+    out = gsub("\\{", '', out) # remove any lingering opening curly brackets
+  }
+  if(index<0){out = NA}
+  return(out)
+}
+
+# main function
 orcid = function(orcid.id='0000-0002-2358-2440'){
   ret = list() # start with blank output
   
@@ -79,43 +97,37 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
     bib.authors = matrix(data='', nrow=nrow(bib), ncol=200) # start with huge matrix
     for (k in 1:nrow(bib)){ # loop needed
       # journal
-      journal = as.character(bib$`journal-title.value`[k])
+      if(bib$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
+      if(bib$`work-type`[k]!='DISSERTATION'){journal = as.character(bib$`journal-title.value`[k])}
       if(is.na(journal)==F){
         cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
         if(cut.start>0){journal = substr(journal, 1, cut.start-2)}
       }
       if(is.na(journal)==T){
-        j = bib$`work-citation.citation`[k]
-        index = gregexpr(pattern='journal = \\{', j)[[1]][1] # find start of journal
-        j = str_sub(j, index+11, nchar(j)) # now take next bit of text
-        index = gregexpr(pattern='\\}', j)[[1]][1] # find first closing curly brackets
-        journal = str_sub(j, 1, index-1)
+        journal = bibtex.search(input=bib$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
       }
       # title
       title = as.character(bib$`work-title.title.value`[k])
       year = as.numeric(bib$`publication-date.year.value`[k])
       # volume
-      r = bib$`work-citation.citation`[k]
-      index = gregexpr(pattern='volume = \\{', r)[[1]][1] # find volume
-      r = str_sub(r, index+10, index+10+20) # now take next short bit of text (maximum 20 for volume number)
-      index = gregexpr(pattern='\\}', r)[[1]][1] # find first closing curly brackets
-      volume = str_sub(r, 1, index-1)
+      volume = bibtex.search(input=bib$`work-citation.citation`[k], pattern='volume = \\{|volume= \\{', length=9)
+      # issue
+      issue = bibtex.search(input=bib$`work-citation.citation`[k], pattern='number = \\{|number= \\{|issue = \\{|issue= \\{', length=9)
+      # pages
+      pages = bibtex.search(input=bib$`work-citation.citation`[k], pattern='pages = \\{|pages= \\{', length=8)
+      if(bib$`work-type`[k]=='DISSERTATION'){volume = issue = pages = NA}
       # authors (use a separate matrix)
       b.authors = bib$`work-contributors.contributor`[[k]]$`credit-name.value`
       if(is.null(b.authors) == F){bib.authors[k, 1:length(b.authors)] = b.authors}
       if(is.null(b.authors) == T){ # extract from bibtex
-        r = bib$`work-citation.citation`[k]
-        index = gregexpr(pattern='author = \\{', r)[[1]][1] # find start of authors
-        r = str_sub(r, index+10, nchar(r)) # now take next bit of text
-        index = gregexpr(pattern='\\}', r)[[1]][1] # find first closing curly brackets
-        b.authors = str_sub(r, 1, index-1)
+        b.authors = bibtex.search(input=bib$`work-citation.citation`[k], pattern='author = \\{|author= \\{', length=9)
         b.authors = strsplit(b.authors, split = ' and ')[[1]] # split by and
         bib.authors[k, 1:length(b.authors)] = b.authors
       }
       # type
       type = bib$`work-type`[[k]]
       # put it all together
-      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=NA, Pages=NA, Type=type, DOI=NA)
+      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=NA)
       papers = rbind(papers, frame)
     }
   }
@@ -202,8 +214,17 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   if(class(papers$Volume)=='factor'){
     papers$Volume = as.character(papers$Volume)
   }
+  if(class(papers$Issue)=='factor'){
+    papers$Issue = as.character(papers$Issue)
+  }
+  if(class(papers$Pages)=='factor'){
+    papers$Pages = as.character(papers$Pages)
+  }
+  if(class(papers$DOI)=='factor'){
+    papers$DOI = as.character(papers$DOI)
+  }
   
-  ## need to remove/change special characters like: … and --
+  ## need to remove/change special characters like: … and -- from title
   
   # return
   ret$name = name

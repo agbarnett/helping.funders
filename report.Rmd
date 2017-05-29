@@ -1,0 +1,81 @@
+---
+title: "List of papers from ORCID"
+#author: Adrian Barnett
+date: "`r format(Sys.time(), '%d %B %Y')`"
+fontsize: 12pt
+output: word_document
+params:
+  orcid.id: NA
+  years.since: NA
+  spacer: NA
+  journal.only: NA
+  order: NA
+  max.authors: NA
+  style: NA
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warnings=FALSE, comment='')
+# function to get filtered papers
+my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', journal.only='Yes', order='ayear'){
+    res = data.frame(NULL)
+    res = orcid.input$papers
+    # add authors
+    if(max.authors==1){res$Authors = orcid.input$authors[,1]}
+    if(max.authors>1){
+      upper.limit = min(c(max.authors, ncol(orcid.input$authors)))
+      res$Authors = apply(orcid.input$authors[, 1:upper.limit], 1, paste5, collapse=spacer) # 
+    } 
+    # add et al
+    if(max.authors < ncol(orcid.input$authors)){ # don't add if at max author number
+      index = orcid.input$authors[, max.authors+1] != '' # something in next author
+      res$Authors[index] = paste(res$Authors[index], spacer, 'et al', sep='')
+    }
+    # filter by year:
+    res = subset(res, Year>= years.since) 
+    # journal articles only
+    if(journal.only=='Yes'){
+      index = grep(pattern='journal', tolower(res$Type)) # search for journal in type
+      res = res[index, ]
+    }
+    
+    ## ordering  (this part comes from server)
+    papers = res
+    papers$Year = as.numeric(papers$Year) # for sorting
+    if(order=='ayear'){papers = arrange(papers, -Year)} #
+    if(order=='dyear'){papers = arrange(papers, Year)} # 
+    if(order=='journal'){papers = arrange(papers, Journal, Year)} # 
+    papers$Year = as.character(papers$Year) # looks better as character
+    ## return
+    return(papers)
+  }
+```
+
+```{r list.papers, results='asis'}
+results = orcid(params$orcid.id)
+cat('Publication report for ',results$name,'.\n', sep='')
+cat('  \n') # line break
+papers = my.filter(results, max.authors=params$max.authors, order=params$order,
+                   journal.only=params$journal.only, years.since=params$years.since,
+                   spacer=params$spacer)
+# APA?
+# to do, add Harvard
+for (k in 1:nrow(papers)){
+if(params$style == 'Harvard'){
+  cat('- ', papers$Authors[k], ", ", papers$Year[k], ", '", papers$Title[k], "', *", papers$Journal[k], '*', sep='')
+  # add volume/issue/doi if not null
+  if(is.na(papers$Volume[k])==F){cat(', vol. ', papers$Volume[k], sep='')}  
+  if(is.na(papers$Issue[k])==F){cat(', no. ', papers$Issue[k], sep='')}  
+  if(is.na(papers$Pages[k])==F){cat(', pp. ', papers$Pages[k], sep='')}  
+  if(is.na(papers$DOI[k])==F){cat(', doi:', papers$DOI[k], sep='')}
+}# end of Harvard
+if(params$style == 'APA'){
+  cat('- ', papers$Authors[k], " (", papers$Year[k], "). ", papers$Title[k], '. *', papers$Journal[k], '*', sep='')
+  # add volume/issue/doi if not null
+  if(is.na(papers$Volume[k])==F){cat(', **', papers$Volume[k], '**', sep='')}  
+  if(is.na(papers$Pages[k])==F){cat(', ', papers$Pages[k], sep='')}  
+  if(is.na(papers$DOI[k])==F){cat(' doi:', papers$DOI[k], sep='')}
+} # end of APA
+  cat('  \n') # line break
+} # end of for loop
+```

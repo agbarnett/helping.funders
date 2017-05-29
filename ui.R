@@ -12,7 +12,7 @@ shinyUI(fluidPage(
   p("No funder should ever need to ask a researcher to paste their papers into an application form. ", 
     "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement.', sep=''),
   
-  p("Please check your papers as I cannot guarantee that lists are correct or complete."),
+  p("Please check your papers as I cannot guarantee that lists are correct or complete. If papers are missing then please first check your OCRID profile as that may need updating."),
 
   sidebarLayout(
     sidebarPanel(
@@ -42,13 +42,13 @@ shinyUI(fluidPage(
                      selected = 'ayear'),
       
       checkboxGroupInput(inputId = "variable", 
-                         label = "What details to show:",
+                         label = "What details to show in list:",
                          choices = c("Authors" = "Authors",
                            "Title" = "Title",
                            "Journal" = "Journal",
                            "Volume" = "Volume",
                            "Issue" = "Issue",
-                           "Page" = "Page",
+                           "Pages" = "Pages",
                            "Year" = "Year",
                            "DOI" = "DOI"), 
                          selected = c('Title','Journal','Year')),
@@ -68,11 +68,18 @@ shinyUI(fluidPage(
         condition = "input.additional==1",
         textInput(inputId = "spacer",
                 label = "Space between authors",
-                value=', '))
+                value=', ')),
+
+      h3("Report using selections above"),
       
+      radioButtons(inputId = "style", 
+                   label = "Report style:",
+                   choices = c("APA" = "APA",
+                               "Harvard" = "Harvard"), 
+                   selected = 'APA'),
       
-      # download
-      #downloadButton("report", "Generate report (not yet working)")
+      # report
+      downloadButton("report", "Generate Word document")
       
     ), # end of sidebar panel
     
@@ -81,5 +88,7 @@ shinyUI(fluidPage(
       h3('List of papers'),
       tableOutput(outputId = 'table')
     ) # end of main panel
-    
+
+    #p("Thanks to ...")
+
 )))

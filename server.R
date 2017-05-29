@@ -15,15 +15,15 @@ shinyServer(function(input, output) {
     orcid(orcid.id=input$orcid.id)
   })
   
-  # function to get filtered papers (used by basics and table)
-  filter = function(){
+  # function to get filtered papers (used by basics and table; must be copied into report)
+  my.filter = function(){
     res = data.frame(NULL)
     res = results()$papers
     # add authors
     if(input$max.authors==1){res$Authors = results()$authors[,1]}
     if(input$max.authors>1){
       upper.limit = min(c(input$max.authors, ncol(results()$authors)))
-      res$Authors = apply(results()$authors[, 1:upper.limit], 1, paste5, collapse=input$spacer) # could make collapse another input
+      res$Authors = apply(results()$authors[, 1:upper.limit], 1, paste5, collapse=input$spacer) #
     } 
     # add et al
     if(input$max.authors < ncol(results()$authors)){ # don't add if at max author number
@@ -39,10 +39,10 @@ shinyServer(function(input, output) {
     }
     return(res)
   }
-  
+
   # basic details:
   output$h_text <- renderText({
-    papers = filter()
+    papers = my.filter()
     # percent first author
     p.first = round(100* sum(papers$First.author==1) / nrow(papers))
     # output
@@ -55,14 +55,15 @@ shinyServer(function(input, output) {
   
   # table of papers:
   output$table <- renderTable({
-    papers = filter()
+    papers = my.filter()
     # ordering 
     papers$Year = as.numeric(papers$Year) # for sorting
     if(input$order=='ayear'){papers = arrange(papers, -Year)} #
     if(input$order=='dyear'){papers = arrange(papers, Year)} # 
     if(input$order=='journal'){papers = arrange(papers, Journal, Year)} # 
     papers$Year = as.character(papers$Year) # looks better as character
-    # select columns and return
+    ## select columns and return
+    # column order - to do
     papers = papers[, input$variable] # select columns
     papers
   })
@@ -71,25 +72,33 @@ shinyServer(function(input, output) {
   # and here http://stackoverflow.com/questions/37018983/how-to-make-pdf-download-in-shiny-app-response-to-user-inputs
   output$report <- downloadHandler(
     filename = function(){
-      paste("report.pdf", sep='') # could expand
+      paste("report.docx", sep='') # could expand, e.g., see here: 
     },
     content = function(file){
       
-      tempReport <- file.path('C:/temp/', "report.Rmd")
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      #tempReport <- "C:/temp/report.Rmd"
       file.copy("report.Rmd", tempReport, overwrite = TRUE)
       
-      rmarkdown::render(
+      params = list(orcid.id = input$orcid.id, 
+                    years.since = input$years.since,
+                    spacer = input$spacer,
+                    journal.only = input$journal.only,
+                    order = input$order,
+           max.authors = input$max.authors,
+           style = input$style)
+      
+      out = rmarkdown::render(
           input = tempReport,
-          output_file = "built_report.pdf",
-          # from output:
-          params = list(table = output$table, # output does not work
-                        text = results()$name)
+          output_file = file,
+          params = params,
+          envir = new.env(parent = globalenv())
         ) 
-        readBin(con = "built_report.pdf", 
-              what = "raw",
-              n = file.info("built_report.pdf")[, "size"]) %>%
-        writeBin(con = file)
-      }
+      file.rename(out, file)
+    }
   )
   
 })
