@@ -5,14 +5,15 @@ shinyUI(fluidPage(
   
   # Application title
   tags$h2("Reducing the administrative burden on researchers"),
-  p("WORK IN PROGRESS. Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
+  p("Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
     "This page takes a researcher`s ", tags$a(href="https://orcid.org/content/orcid-public-data-file", "ORCID ID"), ' and outputs their papers in alternative formats to suit what the funder wants. 
     It uses ', tags$a(href="https://www.crossref.org/", "crossref"), ' to supplement the ORCID data. It may take a while for the output to appear because of the use of multiple databases.'),
 
   p("No funder should ever need to ask a researcher to paste their papers into an application form. ", 
-    "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement.', sep=''),
-  
-  p("Please check your papers as I cannot guarantee that lists are correct or complete. If papers are missing then please first check your OCRID profile as that may need updating."),
+    "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement. Thanks to Scott Chamberlain for help with R.', sep=''),
+
+strong("If papers are missing or no papers appear then please first check your ", tags$a(href="https://orcid.org/", "ORCID profile"),"as that may need updating."),
+       p("The list will only include public works data on the ORCID record. Please check your papers as I cannot guarantee that lists are correct or complete."),
 
   sidebarLayout(
     sidebarPanel(
@@ -70,7 +71,13 @@ shinyUI(fluidPage(
                 label = "Space between authors",
                 value=', ')),
 
-      h3("Report using selections above"),
+      conditionalPanel(
+        condition = "input.additional==1",
+        textInput(inputId = "keywords",
+                  label = "Only show papers with these words in the title (separate words using a comma; case insensitive)",
+                  value='')),
+
+            h3("Report using selections above"),
       
       radioButtons(inputId = "style", 
                    label = "Report style:",
@@ -83,12 +90,16 @@ shinyUI(fluidPage(
       
     ), # end of sidebar panel
     
-    mainPanel(
+        mainPanel(
       textOutput(outputId = 'h_text'),
       h3('List of papers'),
       tableOutput(outputId = 'table')
     ) # end of main panel
 
-    #p("Thanks to ...")
+    # does not work
+    #fluidRow(
+    # column(width=4, offset=0,
+    #         "Thanks to Scott Chamberlain for help with R.")),
+    
 
 )))

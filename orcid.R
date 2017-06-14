@@ -4,12 +4,12 @@
 # Version for shiny
 # May 2017
 
-# add thanks to scott
-# to do, add DOI
-# to do, add ordering? Maybe don't need with report 
-# to do, add progress bar http://shiny.rstudio.com/articles/progress.html 
-
-## Bayesian mixtures for modelling complex medical data
+## Test IDs
+# orcid.id = '0000-0003-2434-4206' # David Moher
+# orcid.id = '0000-0003-2369-8088'
+# orcid.id = '0000-0003-1460-8722' # Nick T
+# orcid.id = '0000-0002-0853-3018' # Elaine
+# orcid.id = '0000-0003-0586-3916' # Alison
 # orcid.id = '0000-0002-9292-0773' # Nicole
 # orcid.id ='0000-0003-3637-2423' # Anisa
 # orcid.id ='0000-0002-2358-2440' # ginny 
@@ -38,13 +38,22 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   bio = orcid_id(orcid = orcid.id, profile='profile') # get basics
   name = paste(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,
                bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value)
+  name = gsub('  ', ' ', name) # remove double space
+  name = gsub(' $', '', name) # remove trailing space
   
   # b) select works
   w = orcid_id(orcid = orcid.id, profile='works') # get works
   d = w[[1]]$works # get tibble
-  d = arrange(d, `work-citation.work-citation-type`) # put bibtex higher for later duplicates
+  #d = arrange(d, `work-citation.work-citation-type`) # put bibtex higher for later duplicates
   # do not filter on year; do filtering on shiny server page instead as it is faster
   
+  if(nrow(d)==0){ # if no papers then end function here
+    ret$name = name
+    ret$papers = NULL
+    ret$authors = NULL
+    return(ret)
+  }
+    
   # c) removed duplicates
   titles = tolower(d$`work-title.title.value`) # get all the titles
   titles = gsub("\\.|,|:|?|!|\\'", '', titles) # remove simple punctuation to be able to better match titles
@@ -94,15 +103,17 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   papers = bib.authors = NULL
   # e1) first bibtex papers
   if(is.null(bib) == F){
-    bib.authors = matrix(data='', nrow=nrow(bib), ncol=200) # start with huge matrix
+    if(nrow(bib)>0){
+    bib.authors = matrix(data='', nrow=nrow(bib), ncol=300) # start with huge matrix
     for (k in 1:nrow(bib)){ # loop needed
       # journal
       if(bib$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
       if(bib$`work-type`[k]!='DISSERTATION'){journal = as.character(bib$`journal-title.value`[k])}
-      if(is.na(journal)==F){
-        cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
-        if(cut.start>0){journal = substr(journal, 1, cut.start-2)}
-      }
+      # removes words in brackets after journal title
+#      if(is.na(journal)==F){
+ #       cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
+#        if(cut.start>0){journal = substr(journal, 1, cut.start-2)}
+#      }
       if(is.na(journal)==T){
         journal = bibtex.search(input=bib$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
       }
@@ -130,24 +141,32 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=NA)
       papers = rbind(papers, frame)
     }
-  }
+    }
+    }
   # e2) ... now for non bibtex from crossref
   authors.crossref = NULL
   if(nrow(cdata.nonbibtex)>0){
-    authors.crossref = matrix(data='', nrow=nrow(cdata.nonbibtex), ncol=200) # start with huge matrix
+    authors.crossref = matrix(data='', nrow=nrow(cdata.nonbibtex), ncol=300) # start with huge matrix
     for (k in 1:nrow(cdata.nonbibtex)){ # loop needed
       # authors, convert from tibble
       fauthors = cdata.nonbibtex$author[[k]]
-      if('given' %in% names(fauthors) == F){
+      fam.only = F # flag for family only
+      if(is.null(fauthors)==F){
+        if('family' %in% names(fauthors) & length(names(fauthors))==1){
+          fauthors = fauthors$family
+          fam.only = T
+        }
+      }
+      if(fam.only==F & 'given' %in% names(fauthors) == F & is.null(fauthors)==F){
         fauthors = filter(fauthors, is.na(name)==F) # not missing
         fauthors = paste(fauthors$name)
       }
-      if('given' %in% names(fauthors)){
+      if(fam.only==F & 'given' %in% names(fauthors) & is.null(fauthors)==F){
         fauthors = filter(fauthors, is.na(family)==F) # not missing
         fauthors = select(fauthors, given, family)
         fauthors = paste(fauthors$given, fauthors$family) # does include NA - to fix
       }
-      authors.crossref[k, 1:length(fauthors)] = fauthors
+      if(is.null(fauthors)==F){authors.crossref[k, 1:length(fauthors)] = fauthors}
       # year (convert dat, to do)
       year = format(as.Date(cdata.nonbibtex$created[k]),'%Y') 
       ## journal
@@ -167,18 +186,55 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       papers = rbind(papers, frame)
     }
   }
-  # e3) ... lastly try others
-  # to do
+  # # e3) ... lastly try others
+  # other.authors = NULL
+  # if(is.null(other) == F){
+  #   if(nrow(other)>0){
+  #     remove = c('manuscript in preparation','manuscript under review')
+  #     other = filter(other, tolower(`journal-title.value`) %in% remove ==F)
+  #     other.authors = matrix(data='', nrow=nrow(other), ncol=200) # start with huge matrix
+  #     for (k in 1:nrow(other)){ # loop needed
+  #       # journal
+  #       if(other$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
+  #       if(other$`work-type`[k]!='DISSERTATION'){journal = as.character(other$`journal-title.value`[k])}
+  #       if(is.na(journal)==T){
+  #         journal = bibtex.search(input=other$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
+  #       }
+  #       # title bib
+  #       title = as.character(other$`work-title.title.value`[k])
+  #       year = as.numeric(other$`publication-date.year.value`[k])
+  #       # volume
+  #       volume = NA # not clear if I can get anything for these
+  #       # issue
+  #       issue = NA
+  #       # pages
+  #       pages = NA
+  #       if(other$`work-type`[k]=='DISSERTATION'){volume = issue = pages = NA}
+  #       # TO HERE. FILL IN AUTHORS IF TYPE IS FORMATTED VANCOUVER OR SIMILAR
+  #       # authors (use a separate matrix)
+  #       b.authors = other$`work-contributors.contributor`[[k]]$`credit-name.value`
+  #       if(is.null(b.authors) == F){other.authors[k, 1:length(b.authors)] = b.authors}
+  #       # type
+  #       type = other$`work-type`[[k]]
+  #       # put it all together
+  #       frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=NA)
+  #       papers = rbind(papers, frame)
+  #     }
+  #   }
+  # }
   
   # f) combine authors and remove empty columns
-  authors = rbind(bib.authors, authors.crossref)
+  authors = rbind(bib.authors, authors.crossref)#, other.authors)
   fmin = min(which(colSums(authors=='') == nrow(authors))) # find first empty column
   authors = authors[, 1:(fmin-1)]
+  if(nrow(papers)==1){authors=matrix(authors); authors=t(authors)}
 
   # remove duplicates (again, just a safety net, should have been caught earlier)
-  dups = duplicated(tolower(papers$Title))
-  papers = papers[!dups,]
-  authors = authors[!dups,]
+  if(nrow(papers)>1){
+    dups = duplicated(tolower(papers$Title))
+    papers = papers[!dups,]
+    authors = authors[!dups,]
+  }
   
   ## count first author papers
   # make alternative versions of name
@@ -198,10 +254,14 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
              bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
   s5 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), ' [A-Z] ', 
              bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  s6 = paste(substr(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,1,1), '[A-Z] ', 
+             bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
   middle  = paste(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value, ' [A-Z]. ', 
                   bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
-  name.to.search = tolower(c(name, reverse, simple, s0, s1, s2, s3, s4, s5, middle))
-  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(authors[,1]))
+  middle1  = paste(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value, ' [A-Z] ', 
+                  bio[[1]]$`orcid-bio`$`personal-details`$`family-name`$value, sep='')
+  name.to.search = tolower(c(name, reverse, simple, s0, s1, s2, s3, s4, s5, s6, middle, middle1))
+  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(authors[,1])) # NEED TO CHANGE TO APPROXIMATE MATCHING, SEE TIERNEY
   papers$First.author = 0
   papers$First.author[index] = 1
 
@@ -225,6 +285,9 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   }
   
   ## need to remove/change special characters like: … and -- from title
+  
+  # replace NAs is authors with ''
+  authors[is.na(authors)==T] = ''
   
   # return
   ret$name = name
