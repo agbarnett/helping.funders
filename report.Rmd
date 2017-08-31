@@ -15,14 +15,16 @@ params:
 ---
 
 ```{r setup, include=FALSE}
+# TO DO, make a function to clean pages for multiple formats
+
 knitr::opts_chunk$set(echo = FALSE, warnings=FALSE, comment='')
 # function to get filtered papers
 my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', journal.only='Yes', order='ayear'){
     res = data.frame(NULL)
     res = orcid.input$papers
     # add authors
-    if(max.authors==1){res$Authors = orcid.input$authors[,1]}
-    if(max.authors>1){
+    if(max.authors == 1){res$Authors = orcid.input$authors[,1]}
+    if(max.authors > 1){
       upper.limit = min(c(max.authors, ncol(orcid.input$authors)))
       res$Authors = apply(orcid.input$authors[, 1:upper.limit], 1, paste5, collapse=spacer) # 
     } 
@@ -55,6 +57,13 @@ my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', 
 results = orcid(params$orcid.id)
 cat('Publication report for ',results$name,'.\n', sep='')
 cat('  \n') # line break
+cat('Earliest year of papers =', params$years.since, '.\n', sep='')
+papers.sorted = 'ascending year'
+if(params$order=='dyear'){papers.sorted = 'descending year'}
+if(params$order=='journal'){papers.sorted = 'journal name'}
+cat('Papers sorted by ', papers.sorted, '.\n', sep='')
+if(params$journal.only=='Yes'){cat('Journals only.\n', sep='')} 
+cat('  \n') # link break
 papers = my.filter(results, max.authors=params$max.authors, order=params$order,
                    journal.only=params$journal.only, years.since=params$years.since,
                    spacer=params$spacer)
@@ -66,14 +75,22 @@ if(params$style == 'Harvard'){
   # add volume/issue/doi if not null
   if(is.na(papers$Volume[k])==F){cat(', vol. ', papers$Volume[k], sep='')}  
   if(is.na(papers$Issue[k])==F){cat(', no. ', papers$Issue[k], sep='')}  
-  if(is.na(papers$Pages[k])==F){cat(', pp. ', papers$Pages[k], sep='')}  
+  if(is.na(papers$Pages[k])==F){
+    pages = papers$Pages[k]
+    pages = gsub('--', '-', pages) # try to get en dash?
+    cat(', pp. ', pages, sep='')
+  }  
   if(is.na(papers$DOI[k])==F){cat(', doi:', papers$DOI[k], sep='')}
 }# end of Harvard
 if(params$style == 'APA'){
   cat('- ', papers$Authors[k], " (", papers$Year[k], "). ", papers$Title[k], '. *', papers$Journal[k], '*', sep='')
   # add volume/issue/doi if not null
   if(is.na(papers$Volume[k])==F){cat(', **', papers$Volume[k], '**', sep='')}  
-  if(is.na(papers$Pages[k])==F){cat(', ', papers$Pages[k], sep='')}  
+  if(is.na(papers$Pages[k])==F){
+    pages = papers$Pages[k]
+    pages = gsub('--', '-', pages) # try to get en dash?
+    cat(', ', pages, sep='')
+  }  
   if(is.na(papers$DOI[k])==F){cat(' doi:', papers$DOI[k], sep='')}
 } # end of APA
   cat('  \n') # line break

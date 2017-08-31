@@ -33,7 +33,7 @@ bibtex.search = function(input, pattern, length){
 # main function
 orcid = function(orcid.id='0000-0002-2358-2440'){
   ret = list() # start with blank output
-  
+
   # a) select person
   bio = orcid_id(orcid = orcid.id, profile='profile') # get basics
   name = paste(bio[[1]]$`orcid-bio`$`personal-details`$`given-names`$value,
@@ -186,45 +186,53 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       papers = rbind(papers, frame)
     }
   }
-  # # e3) ... lastly try others
-  # other.authors = NULL
-  # if(is.null(other) == F){
-  #   if(nrow(other)>0){
-  #     remove = c('manuscript in preparation','manuscript under review')
-  #     other = filter(other, tolower(`journal-title.value`) %in% remove ==F)
-  #     other.authors = matrix(data='', nrow=nrow(other), ncol=200) # start with huge matrix
-  #     for (k in 1:nrow(other)){ # loop needed
-  #       # journal
-  #       if(other$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
-  #       if(other$`work-type`[k]!='DISSERTATION'){journal = as.character(other$`journal-title.value`[k])}
-  #       if(is.na(journal)==T){
-  #         journal = bibtex.search(input=other$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
-  #       }
-  #       # title bib
-  #       title = as.character(other$`work-title.title.value`[k])
-  #       year = as.numeric(other$`publication-date.year.value`[k])
-  #       # volume
-  #       volume = NA # not clear if I can get anything for these
-  #       # issue
-  #       issue = NA
-  #       # pages
-  #       pages = NA
-  #       if(other$`work-type`[k]=='DISSERTATION'){volume = issue = pages = NA}
-  #       # TO HERE. FILL IN AUTHORS IF TYPE IS FORMATTED VANCOUVER OR SIMILAR
-  #       # authors (use a separate matrix)
-  #       b.authors = other$`work-contributors.contributor`[[k]]$`credit-name.value`
-  #       if(is.null(b.authors) == F){other.authors[k, 1:length(b.authors)] = b.authors}
-  #       # type
-  #       type = other$`work-type`[[k]]
-  #       # put it all together
-  #       frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=NA)
-  #       papers = rbind(papers, frame)
-  #     }
-  #   }
-  # }
+  ## e3) ... lastly try others
+  other.authors = NULL
+  if(is.null(other) == F){
+    if(nrow(other)>0){
+      remove = c('manuscript in preparation','manuscript under review')
+      other = filter(other, tolower(`journal-title.value`) %in% remove ==F)
+      other.authors = matrix(data='', nrow=nrow(other), ncol=300) # start with huge matrix
+      for (k in 1:nrow(other)){ # loop needed
+        # journal
+        if(other$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
+        if(other$`work-type`[k]!='DISSERTATION'){journal = as.character(other$`journal-title.value`[k])}
+        if(is.na(journal)==T){
+          journal = bibtex.search(input=other$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
+        }
+        # title bib
+        title = as.character(other$`work-title.title.value`[k])
+        year = as.numeric(other$`publication-date.year.value`[k])
+        # volume
+        volume = NA # not clear if I can get anything for these
+        # issue
+        issue = NA
+        # pages
+        pages = NA
+        if(other$`work-type`[k]=='DISSERTATION'){volume = issue = pages = NA}
+        # Fill in authors if type is Vancouver, could add others
+        # authors (use a separate matrix)
+        b.authors = other$`work-contributors.contributor`[[k]]$`credit-name.value`
+        if(is.null(b.authors) == T & is.na(other$`work-citation.work-citation-type`[[k]])==F){
+          if(other$`work-citation.work-citation-type`[[k]] == 'FORMATTED_VANCOUVER'){
+            b.authors = other$`work-citation.citation`[[k]]
+            cut.start = gregexpr(pattern='\\.', b.authors)[[1]][1] # First full stop
+            if(cut.start>0){b.authors = substr(b.authors, 1, cut.start-1)} # take start of text as authors
+            b.authors = strsplit(b.authors, split=', ')[[1]] # split authors
+          }
+        }
+        if(is.null(b.authors) == F){other.authors[k, 1:length(b.authors)] = b.authors} # update authors
+        # type
+        type = other$`work-type`[[k]]
+        # put it all together
+        frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=NA)
+        papers = rbind(papers, frame)
+      }
+    }
+  }
   
   # f) combine authors and remove empty columns
-  authors = rbind(bib.authors, authors.crossref)#, other.authors)
+  authors = rbind(bib.authors, authors.crossref, other.authors)
   fmin = min(which(colSums(authors=='') == nrow(authors))) # find first empty column
   authors = authors[, 1:(fmin-1)]
   if(nrow(papers)==1){authors=matrix(authors); authors=t(authors)}
