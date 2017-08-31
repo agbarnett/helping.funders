@@ -1,5 +1,5 @@
 # UI for helping.funders
-# May 2017
+# June 2017
 
 shinyUI(fluidPage(
   
