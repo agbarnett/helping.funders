@@ -16,6 +16,7 @@
 # orcid.id ='0000-0001-6339-0374' # me
 # orcid.id = '0000-0002-2826-0627' # sonya
 # orcid.id = '0000-0002-5559-3267' # nick
+# orcid.id='0000-0002-8791-1709'# ro
 
 # function for finding details in bibtex
 bibtex.search = function(input, pattern, length){
@@ -131,10 +132,24 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       b.authors = bib$`work-contributors.contributor`[[k]]$`credit-name.value`
       if(is.null(b.authors) == F){bib.authors[k, 1:length(b.authors)] = b.authors}
       if(is.null(b.authors) == T){ # extract from bibtex
-        b.authors = bibtex.search(input=bib$`work-citation.citation`[k], pattern='author = \\{|author= \\{', length=9)
-        b.authors = strsplit(b.authors, split = ' and ')[[1]] # split by and
+        # if there's a PMID
+        pmid.index = gregexpr(pattern='PMID', bib$`work-citation.citation`[k])[[1]][1] # find 
+        if(pmid.index >= 0){
+          pmid = str_sub(bib$`work-citation.citation`[k], pmid.index+5, pmid.index+5+8-1) # 8 digits long, +5 for "PMID:"
+          paper.details <- entrez_summary(db="pubmed", id=pmid)
+          b.authors = paper.details$authors$name
+          # fill in other details too
+          issue = paper.details$issue
+          volume = paper.details$volume
+          title = paper.details$title
+          journal = paper.details$fulljournalname
+        }
+        if(pmid.index < 0){ # no PMID
+          b.authors = bibtex.search(input=bib$`work-citation.citation`[k], pattern='author = \\{|author= \\{', length=9)
+          b.authors = strsplit(b.authors, split = ' and ')[[1]] # split by and
+        }
         bib.authors[k, 1:length(b.authors)] = b.authors
-      }
+    }
       # type
       type = bib$`work-type`[[k]]
       # put it all together
