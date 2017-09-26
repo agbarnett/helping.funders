@@ -6,6 +6,7 @@
 
 ## Test IDs
 # orcid.id = '0000-0003-2434-4206' # David Moher
+# orcid.id = '0000-0002-3229-5662' # Nobuko Miyairi
 # orcid.id = '0000-0003-2369-8088'
 # orcid.id = '0000-0003-1460-8722' # Nick T
 # orcid.id = '0000-0002-0853-3018' # Elaine
@@ -203,6 +204,7 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   }
   ## e3) ... lastly try others
   other.authors = NULL
+  exceptions = c('DISSERTATION','REPORT','NEWSLETTER_ARTICLE') # exceptions to journal
   if(is.null(other) == F){
     if(nrow(other)>0){
       remove = c('manuscript in preparation','manuscript under review')
@@ -211,7 +213,9 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       for (k in 1:nrow(other)){ # loop needed
         # journal
         if(other$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
-        if(other$`work-type`[k]!='DISSERTATION'){journal = as.character(other$`journal-title.value`[k])}
+        if(other$`work-type`[k]=='REPORT'){journal = 'Report'}
+        if(other$`work-type`[k]=='NEWSLETTER_ARTICLE'){journal = 'Newsletter article'}
+        if(other$`work-type`[k]%in%exceptions == F ){journal = as.character(other$`journal-title.value`[k])}
         if(is.na(journal)==T){
           journal = bibtex.search(input=other$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
         }
