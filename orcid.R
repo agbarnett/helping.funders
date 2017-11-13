@@ -18,6 +18,7 @@
 # orcid.id = '0000-0002-2826-0627' # sonya
 # orcid.id = '0000-0002-5559-3267' # nick
 # orcid.id='0000-0002-8791-1709'# ro
+# orcid.id='0000-0001-7733-287X'
 
 # function for finding details in bibtex
 bibtex.search = function(input, pattern, length){
@@ -110,7 +111,10 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
     for (k in 1:nrow(bib)){ # loop needed
       # journal
       if(bib$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
-      if(bib$`work-type`[k]!='DISSERTATION'){journal = as.character(bib$`journal-title.value`[k])}
+      if(bib$`work-type`[k]!='DISSERTATION'){
+        if(is.null(bib$`journal-title.value`) == TRUE){journal = as.character(bib$`journal-title`[k])}
+        if(is.null(bib$`journal-title.value`) == FALSE){journal = as.character(bib$`journal-title.value`[k])}
+      }
       # removes words in brackets after journal title
 #      if(is.na(journal)==F){
  #       cut.start = gregexpr(pattern='\\(', journal)[[1]][1]
