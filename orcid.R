@@ -5,6 +5,7 @@
 # May 2017
 
 ## Test IDs
+# orcid.id = '0000-0002-7129-0039'
 # orcid.id = '0000-0003-2434-4206' # David Moher
 # orcid.id = '0000-0002-3229-5662' # Nobuko Miyairi
 # orcid.id = '0000-0003-2369-8088'
@@ -187,8 +188,13 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
         fauthors = paste(fauthors$given, fauthors$family) # does include NA - to fix
       }
       if(is.null(fauthors)==F){authors.crossref[k, 1:length(fauthors)] = fauthors}
-      # year (convert dat, to do)
-      year = format(as.Date(cdata.nonbibtex$created[k]),'%Y') 
+      # year (was based on created, fixed January 2018)
+      idates = cdata.nonbibtex$issued[k]
+      idates[is.na(idates)] = cdata.nonbibtex$created[is.na(idates)] # if missing use created date
+      dlengths = nchar(idates)
+      idates[dlengths==4] = paste(idates[dlengths==4],'-01-01',sep='') # add years and months as needed
+      idates[dlengths==7] = paste(idates[dlengths==7],'-01',sep='')
+      year = format(as.Date(idates), '%Y')
       ## journal
       journal = cdata.nonbibtex$container.title[k] 
       # title
