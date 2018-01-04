@@ -5,7 +5,8 @@
 # May 2017
 
 ## Test IDs
-# orcid.id = '0000-0002-7129-0039'
+# orcid.id = '0000-0003-0152-4394' # Richard
+# orcid.id = '0000-0002-7129-0039' # Sue
 # orcid.id = '0000-0003-2434-4206' # David Moher
 # orcid.id = '0000-0002-3229-5662' # Nobuko Miyairi
 # orcid.id = '0000-0003-2369-8088'
@@ -214,7 +215,7 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   }
   ## e3) ... lastly try others
   other.authors = NULL
-  exceptions = c('DISSERTATION','REPORT','NEWSLETTER_ARTICLE') # exceptions to journal
+  exceptions = c('DISSERTATION','REPORT','NEWSLETTER_ARTICLE','DATA_SET') # exceptions to journal
   if(is.null(other) == F){
     if(nrow(other)>0){
       remove = c('manuscript in preparation','manuscript under review')
@@ -222,6 +223,7 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
       other.authors = matrix(data='', nrow=nrow(other), ncol=300) # start with huge matrix
       for (k in 1:nrow(other)){ # loop needed
         # journal
+        if(other$`work-type`[k]=='DATA_SET'){journal = 'Data set'}
         if(other$`work-type`[k]=='DISSERTATION'){journal = 'Dissertation'}
         if(other$`work-type`[k]=='REPORT'){journal = 'Report'}
         if(other$`work-type`[k]=='NEWSLETTER_ARTICLE'){journal = 'Newsletter article'}
