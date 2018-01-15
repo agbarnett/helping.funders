@@ -5,21 +5,13 @@
 # May 2017
 
 ## Test IDs
+# orcid.id = '0000-0001-8369-1238' # Suzanne
 # orcid.id = '0000-0003-0152-4394' # Richard
 # orcid.id = '0000-0002-7129-0039' # Sue
 # orcid.id = '0000-0003-2434-4206' # David Moher
-# orcid.id = '0000-0002-3229-5662' # Nobuko Miyairi
-# orcid.id = '0000-0003-2369-8088'
-# orcid.id = '0000-0003-1460-8722' # Nick T
-# orcid.id = '0000-0002-0853-3018' # Elaine
-# orcid.id = '0000-0003-0586-3916' # Alison
-# orcid.id = '0000-0002-9292-0773' # Nicole
-# orcid.id ='0000-0003-3637-2423' # Anisa
 # orcid.id ='0000-0002-2358-2440' # ginny 
 # orcid.id ='0000-0001-6339-0374' # me
-# orcid.id = '0000-0002-2826-0627' # sonya
 # orcid.id = '0000-0002-5559-3267' # nick
-# orcid.id='0000-0002-8791-1709'# ro
 # orcid.id='0000-0001-7733-287X'
 
 # function for finding details in bibtex
@@ -229,7 +221,9 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
         if(other$`work-type`[k]=='NEWSLETTER_ARTICLE'){journal = 'Newsletter article'}
         if(other$`work-type`[k]%in%exceptions == F ){journal = as.character(other$`journal-title.value`[k])}
         if(is.na(journal)==T){
-          journal = bibtex.search(input=other$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
+          if(is.na(other$`work-citation.citation`[k])==F){ # added to fix bug 15 January 2018
+            journal = bibtex.search(input=other$`work-citation.citation`[k], pattern='journal = \\{|journal= \\{', length=10)
+          }
         }
         # title bib
         title = as.character(other$`work-title.title.value`[k])
