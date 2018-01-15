@@ -76,6 +76,12 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
             if(length(pcmid) > 0){doi = id_converter(pcmid, type='pmcid')$records$doi}
           }
         }
+        if(length(doi)==0){ # try again, searching for any DOI, works with Agricola (15 jan 2018)
+          if(length(grep('doi.org',to.check$`work-external-identifier-id.value`))>0){
+            doi = to.check$`work-external-identifier-id.value` # extract DOI 
+            doi = gsub('https://doi.org/', '', doi) # remove http stuff
+          }
+        }
         if(length(doi)==0){ # if no DOI available then add to 'other' frame
           other = rbind(other, d[i,])
         }
