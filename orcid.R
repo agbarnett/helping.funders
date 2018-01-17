@@ -13,6 +13,7 @@
 # orcid.id ='0000-0001-6339-0374' # me
 # orcid.id = '0000-0002-5559-3267' # nick
 # orcid.id='0000-0001-7733-287X'
+# orcid.id='0000-0001-7564-073X' # Paul
 
 # function for finding details in bibtex
 bibtex.search = function(input, pattern, length){
@@ -189,10 +190,14 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
         fauthors = select(fauthors, given, family)
         fauthors = paste(fauthors$given, fauthors$family) # does include NA - to fix
       }
-      if(is.null(fauthors)==F){authors.crossref[k, 1:length(fauthors)] = fauthors}
+      if(is.null(fauthors)==F){
+        if(length(fauthors)>ncol(authors.crossref)){fauthors = fauthors[1:ncol(authors.crossref)]} # truncate where author numbers are huge (jan 2018)
+        authors.crossref[k, 1:length(fauthors)] = fauthors
+      }
       # year (was based on created, fixed January 2018)
       idates = cdata.nonbibtex$issued[k]
-      idates[is.na(idates)] = cdata.nonbibtex$created[is.na(idates)] # if missing use created date
+      cdates = cdata.nonbibtex$created[k]
+      if(is.na(idates)){idates = cdates} # if missing use created date
       dlengths = nchar(idates)
       idates[dlengths==4] = paste(idates[dlengths==4],'-01-01',sep='') # add years and months as needed
       idates[dlengths==7] = paste(idates[dlengths==7],'-01',sep='')
@@ -267,7 +272,9 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
   
   # f) combine authors and remove empty columns
   authors = rbind(bib.authors, authors.crossref, other.authors)
-  fmin = min(which(colSums(authors=='') == nrow(authors))) # find first empty column
+  to.find = which(colSums(authors=='') == nrow(authors))
+  if(length(to.find)==0){fmin = ncol(authors)+1 } # all columns full
+  if(length(to.find)>0){fmin = min(to.find)} # find first empty column
   authors = authors[, 1:(fmin-1)]
   if(nrow(papers)==1){authors=matrix(authors); authors=t(authors)}
 
