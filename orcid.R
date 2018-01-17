@@ -70,7 +70,10 @@ orcid = function(orcid.id='0000-0002-2358-2440'){
         doi = subset(to.check, `work-external-identifier-type`=='DOI')$`work-external-identifier-id.value` # extract DOI
         if(length(doi)==0){ # if no DOI available then use PMID
           pmid = subset(to.check, `work-external-identifier-type`=='PMID')$`work-external-identifier-id.value`
-          if(length(pmid) > 0){doi = id_converter(pmid, type='pmid')$records$doi} # does not always work
+          if(length(pmid) > 0){
+            pmid = gsub('MEDLINE:','', pmid) # added 17 jan 2018
+            doi = id_converter(pmid, type='pmid')$records$doi # does not always work
+          } 
           if(is.null(doi) ==T){ # if still not luck try PMC
             pcmid = subset(to.check, `work-external-identifier-type`=='PMC')$`work-external-identifier-id.value`
             if(length(pcmid) > 0){doi = id_converter(pcmid, type='pmcid')$records$doi}
