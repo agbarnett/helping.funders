@@ -26,7 +26,7 @@ strong("If papers are missing or no papers appear then please first check your "
                               min = 1970,
                               max = 2017,
                               step = 1,
-                              value = 2014),
+                              value = 2013),
       
       numericInput(inputId = "max.authors",
                    label = "Maximum number of authors:",
