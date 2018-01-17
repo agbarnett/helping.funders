@@ -9,8 +9,8 @@ shinyUI(fluidPage(
     "This page takes a researcher`s ", tags$a(href="https://orcid.org/content/orcid-public-data-file", "ORCID ID"), ' and outputs their papers in alternative formats to suit what the funder wants. 
     It uses ', tags$a(href="https://www.crossref.org/", "crossref"), ' and ', tags$a(href="https://cran.r-project.org/web/packages/rentrez/vignettes/rentrez_tutorial.html", "rentrez"), ' to supplement the ORCID data. It may take a while for the output to appear because of the use of multiple databases.'),
 
-  p("No funder should ever need to ask a researcher to paste their papers into an application form. ", 
-    "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you have any suggestions for improvement. Thanks to Scott Chamberlain for help with R.', sep=''),
+  p("Funders should stop asking researchers to paste or type their papers into an application form. ", 
+    "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you find a bug or have any ideas for improvements. Thanks to Scott Chamberlain for help with R.', sep=''),
 
 strong("If papers are missing or no papers appear then please first check your ", tags$a(href="https://orcid.org/", "ORCID profile"),"as that may need updating."),
        p("The list will only include public works data on the ORCID record. Please check your papers as I cannot guarantee that lists are correct or complete."),
