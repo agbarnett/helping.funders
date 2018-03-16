@@ -54,7 +54,7 @@ my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', 
 ```
 
 ```{r list.papers, results='asis'}
-results = orcid(params$orcid.id)
+results = my.orcid(params$orcid.id)
 cat('Publication report for ',results$name,'.\n', sep='')
 cat('  \n') # line break
 cat('Earliest year of papers =', params$years.since, '.\n', sep='')
@@ -67,8 +67,7 @@ cat('  \n') # link break
 papers = my.filter(results, max.authors=params$max.authors, order=params$order,
                    journal.only=params$journal.only, years.since=params$years.since,
                    spacer=params$spacer)
-# APA?
-# to do, add Harvard
+# Harvard
 for (k in 1:nrow(papers)){
 if(params$style == 'Harvard'){
   cat('- ', papers$Authors[k], ", ", papers$Year[k], ", '", papers$Title[k], "', *", papers$Journal[k], '*', sep='')

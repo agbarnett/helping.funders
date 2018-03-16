@@ -17,7 +17,7 @@ shinyServer(function(input, output) {
     )
     withProgress(message = 'Getting data from ORCID/Crossref', 
                  detail = 'This may take a while...', value=0, {
-      o = orcid(orcid.id=id.no.spaces)
+      o = my.orcid(orcid.id=id.no.spaces)
                    incProgress(1)
     })
     return(o)

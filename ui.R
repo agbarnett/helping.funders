@@ -5,6 +5,7 @@ shinyUI(fluidPage(
   
   # Application title
   tags$h2("Reducing the administrative burden on researchers"),
+  p("UPDATE 10 MARCH 2018: There's been a big change to the behind the scenes architecture and I am working on a major update. The new code is not yet capturing all publications, but hopefully will again soon."),
   p("Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
     "This page takes a researcher`s ", tags$a(href="https://orcid.org/content/orcid-public-data-file", "ORCID ID"), ' and outputs their papers in alternative formats to suit what the funder wants. 
     It uses ', tags$a(href="https://www.crossref.org/", "crossref"), ' and ', tags$a(href="https://cran.r-project.org/web/packages/rentrez/vignettes/rentrez_tutorial.html", "rentrez"), ' to supplement the ORCID data. It may take a while for the output to appear because of the use of multiple databases.'),
