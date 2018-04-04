@@ -1,6 +1,6 @@
 ---
 title: "List of papers from ORCID"
-#author: Adrian Barnett
+author: Adrian Barnett
 date: "`r format(Sys.time(), '%d %B %Y')`"
 fontsize: 12pt
 output: word_document
@@ -16,6 +16,8 @@ params:
 
 ```{r setup, include=FALSE}
 # TO DO, make a function to clean pages for multiple formats
+# TO DO, ARC style
+# TO DO, flag OA
 
 knitr::opts_chunk$set(echo = FALSE, warnings=FALSE, comment='')
 # function to get filtered papers
@@ -63,13 +65,15 @@ if(params$order=='dyear'){papers.sorted = 'descending year'}
 if(params$order=='journal'){papers.sorted = 'journal name'}
 cat('Papers sorted by ', papers.sorted, '.\n', sep='')
 if(params$journal.only=='Yes'){cat('Journals only.\n', sep='')} 
-cat('  \n') # link break
+cat('  \n') # line break
 papers = my.filter(results, max.authors=params$max.authors, order=params$order,
                    journal.only=params$journal.only, years.since=params$years.since,
                    spacer=params$spacer)
 # Harvard
 for (k in 1:nrow(papers)){
 if(params$style == 'Harvard'){
+  col = 'black'
+  if(papers$OA[k]==T){col = 'blue'}
   cat('- ', papers$Authors[k], ", ", papers$Year[k], ", '", papers$Title[k], "', *", papers$Journal[k], '*', sep='')
   # add volume/issue/doi if not null
   if(is.na(papers$Volume[k])==F){cat(', vol. ', papers$Volume[k], sep='')}  
@@ -92,6 +96,6 @@ if(params$style == 'APA'){
   }  
   if(is.na(papers$DOI[k])==F){cat(' doi:', papers$DOI[k], sep='')}
 } # end of APA
-  cat('  \n') # line break
+ cat('  \n') # line break
 } # end of for loop
 ```

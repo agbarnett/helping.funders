@@ -2,7 +2,7 @@
 # Take ORCID ID and make a list of papers
 # use rcrossref to get better formatted data
 # Version for shiny
-# May 2017
+# March 2018
 
 # set token as an environmental variable (March 2018)
 x <- "07073399-4dcc-47b3-a0a8-925327224519"
@@ -20,19 +20,6 @@ Sys.setenv(ORCID_TOKEN=x)
 # orcid.id='0000-0001-7733-287X'
 # orcid.id='0000-0001-7564-073X' # Paul
 # orcid.id='0000-0003-3637-2423' # Anisa
-
-# function for finding details in bibtex
-bibtex.search = function(input, pattern, length){
-  index = gregexpr(pattern=pattern, input)[[1]][1] # find issue
-  if(index>=0){ 
-    input = str_sub(input, index+length, nchar(input)) # now take next short bit of text (maximum 20 for volume number)
-    index = gregexpr(pattern='\\}', input)[[1]][1] # find first closing curly brackets
-    out = str_sub(input, 1, index-1)
-    out = gsub("\\{", '', out) # remove any lingering opening curly brackets
-  }
-  if(index<0){out = NA}
-  return(out)
-}
 
 # main function
 my.orcid = function(orcid.id='0000-0002-2358-2440'){
@@ -91,7 +78,9 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){
   
   # d) get nicely formatted data for papers with a DOIs using crossref
   cdata.nonbibtex = cr_works(dois)$data
-
+  # add Open Access status (March 2018)
+  cdata.nonbibtex$OA = oadoi_fetch(dois=cdata.nonbibtex$DOI, email='a.barnett@qut.edu.au')$is_oa
+  
   # e) format papers with separate matrix for authors ###
   papers = bib.authors = NULL
   # e2) ... now for non bibtex from crossref
@@ -139,10 +128,12 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){
       pages = cdata.nonbibtex$page[k]
       # doi
       DOI = cdata.nonbibtex$DOI[k]
+      # OA
+      OA = cdata.nonbibtex$OA[k]
       # type
       type = cdata.nonbibtex$type[k]
       # put it all together
-      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=DOI) 
+      frame = data.frame(Journal=journal, Title=title, Year=year, Volume=volume, Issue=issue, Pages=pages, Type=type, DOI=DOI, OA=OA) 
       papers = rbind(papers, frame)
     }
   }

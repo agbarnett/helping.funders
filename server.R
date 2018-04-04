@@ -9,11 +9,12 @@ shinyServer(function(input, output) {
   # reactive function to get publication data
   results <- reactive({
     id.no.spaces = input$orcid.id
+    id.no.spaces = id.no.spaces[id.no.spaces!=''] # remove missing IDs
     id.no.spaces = gsub(' $', '', id.no.spaces) # remove trailing space
     
     validate(
       need(nchar(id.no.spaces) == 19, 
-           paste("ORCID IDs should be 16 numbers separated by three dashes, e.g., 0000-0002-2358-2440", sep=''))
+           paste("ORCID IDs should be 16 letters/numbers separated by three dashes, e.g., 0000-0002-2358-2440", sep=''))
     )
     withProgress(message = 'Getting data from ORCID/Crossref', 
                  detail = 'This may take a while...', value=0, {
@@ -62,6 +63,9 @@ shinyServer(function(input, output) {
   # basic details:
   output$h_text <- renderText({
     papers = my.filter()
+    # percent open access
+    p.OA = 0
+    if(is.null(papers)==F){p.OA = round(100* sum(papers$OA) / nrow(papers))}
     # percent first author
     p.first = 0
     if(is.null(papers)==F){p.first = round(100* sum(papers$First.author==1) / nrow(papers))}
@@ -69,6 +73,7 @@ shinyServer(function(input, output) {
     paste('Researcher = ', results()$name, '.\n',
             'Number of papers = ', nrow(papers), 
           '. Percent of first authors papers = ', p.first, 
+          '%. Percent of open access papers = ', p.OA, 
           '%.', sep='')
   })
   
