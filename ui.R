@@ -5,18 +5,17 @@ shinyUI(fluidPage(
   
   # Application title
   tags$h2("Reducing the administrative burden on researchers"),
-#  p("UPDATE 10 MARCH 2018: There's been a big change to the behind the scenes architecture and I am working on a major update. The new code is not yet capturing all publications, but hopefully will again soon."),
-  p("Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
+  div(p(HTML(paste0("Researchers are often asked by funders to give their publication list, but funders often have different requirements (e.g., all papers versus only those in the last five years) and researchers waste a lot of time formating papers. ",
     "This page takes a researcher`s ", tags$a(href="https://orcid.org/content/orcid-public-data-file", "ORCID ID"), ' and outputs their papers in alternative formats to suit what the funder wants. 
-    It uses ', tags$a(href="https://www.crossref.org/", "crossref"), ', ', 
-    tags$a(href="https://cran.r-project.org/web/packages/rentrez/vignettes/rentrez_tutorial.html", "rentrez"), ' and ', 
-    tags$a(href="https://cran.r-project.org/web/packages/roadoi/vignettes/intro.html", "roadoi"), ' to supplement the ORCID data. It may take a while for the output to appear because of the use of multiple databases.'),
+    It uses ', a(href="https://www.crossref.org/", "crossref"), ', ', 
+    a(href="https://cran.r-project.org/web/packages/rentrez/vignettes/rentrez_tutorial.html", "rentrez"), ' and ', 
+    a(href="https://cran.r-project.org/web/packages/roadoi/vignettes/intro.html", "roadoi"), ' to supplement the ORCID data. It may take a while for the output to appear because of the use of multiple databases.')))),
 
   p("Funders should stop asking researchers to paste or type their papers into an application form. ", 
     "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you find a bug or have any ideas for improvements. Thanks to Scott Chamberlain for help with R.', sep=''),
 
 strong("If papers are missing or no papers appear then please first check your ", tags$a(href="https://orcid.org/", "ORCID profile"),"as that may need updating."),
-       p("The list will only include public works data on the ORCID record. Please check your papers as I cannot guarantee that lists are correct or complete."),
+       div(p(HTML(paste0("The list will only include public works data on the ORCID record that have a ", a(href="https://en.wikipedia.org/wiki/Digital_object_identifier", "DOI"), ". Please check your papers as I cannot guarantee that lists are correct or complete.")))),
 
 p("You might also like my ", tags$a(href="https://aushsi.shinyapps.io/work-pals/", "other app"), "that creates a network diagram of groups of researchers` papers."),
 
@@ -24,7 +23,7 @@ p("You might also like my ", tags$a(href="https://aushsi.shinyapps.io/work-pals/
     sidebarPanel(
       textInput(inputId = "orcid.id",
                 label = "ORCID ID (16 digits with 3 dashes):",
-                value='0000-0003-3637-2423'),
+                value='0000-0003-3637-2423'), # Anisa
                  
       numericInput(inputId = "years.since",
                               label = "Earliest year of papers:",
@@ -59,7 +58,7 @@ p("You might also like my ", tags$a(href="https://aushsi.shinyapps.io/work-pals/
                            "DOI" = "DOI"), 
                          selected = c('Title','Journal','Year')),
       
-      checkboxInput(inputId="additional", label="Show additional options:",
+      checkboxInput(inputId="additional", label="Show additional options",
                      value = FALSE, width='100%'),      
       
       conditionalPanel(
@@ -87,9 +86,17 @@ p("You might also like my ", tags$a(href="https://aushsi.shinyapps.io/work-pals/
       radioButtons(inputId = "style", 
                    label = "Report style:",
                    choices = c("APA" = "APA",
-                               "Harvard" = "Harvard"), 
+                               "Harvard" = "Harvard",
+                               "ARC" = "ARC"), 
                    selected = 'APA'),
       
+      checkboxInput(inputId = "flag.OA",
+                    label = "Highlight Open Access papers",
+                    TRUE),
+      
+      checkboxInput(inputId = "bold.author",
+                    label = "Bold the author's name",
+                    TRUE),
       # report
       downloadButton("report", "Generate Word document")
       

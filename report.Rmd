@@ -1,6 +1,6 @@
 ---
 title: "List of papers from ORCID"
-author: Adrian Barnett
+author: App created by Adrian Barnett (a.barnett@qut.edu.au)
 date: "`r format(Sys.time(), '%d %B %Y')`"
 fontsize: 12pt
 output: word_document
@@ -12,23 +12,31 @@ params:
   order: NA
   max.authors: NA
   style: NA
+  flag.OA: NA
+  bold.author: NA
 ---
 
 ```{r setup, include=FALSE}
 # TO DO, make a function to clean pages for multiple formats
-# TO DO, ARC style
-# TO DO, flag OA
+# TO DO, ARC style - not finished
 
 knitr::opts_chunk$set(echo = FALSE, warnings=FALSE, comment='')
 # function to get filtered papers
-my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', journal.only='Yes', order='ayear'){
+my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', journal.only='Yes', order='ayear', bold.author=T){
     res = data.frame(NULL)
     res = orcid.input$papers
+    # bold author
+    authors = orcid.input$authors
+    if(bold.author==T){
+      for (k in 1:nrow(authors)){
+         authors[k,orcid.input$author.order[k]] = paste('**', authors[k,orcid.input$author.order[k]], '**', sep='') # add bolding
+      }
+    }
     # add authors
-    if(max.authors == 1){res$Authors = orcid.input$authors[,1]}
+    if(max.authors == 1){res$Authors = authors[,1]}
     if(max.authors > 1){
-      upper.limit = min(c(max.authors, ncol(orcid.input$authors)))
-      res$Authors = apply(orcid.input$authors[, 1:upper.limit], 1, paste5, collapse=spacer) # 
+      upper.limit = min(c(max.authors, ncol(authors)))
+      res$Authors = apply(authors[, 1:upper.limit], 1, paste5, collapse=spacer) # 
     } 
     # add et al
     if(max.authors < ncol(orcid.input$authors)){ # don't add if at max author number
@@ -56,6 +64,7 @@ my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', 
 ```
 
 ```{r list.papers, results='asis'}
+star.to.use = "\\+ " # how to highlight Open Access papers
 results = my.orcid(params$orcid.id)
 cat('Publication report for ',results$name,'.\n', sep='')
 cat('  \n') # line break
@@ -65,16 +74,80 @@ if(params$order=='dyear'){papers.sorted = 'descending year'}
 if(params$order=='journal'){papers.sorted = 'journal name'}
 cat('Papers sorted by ', papers.sorted, '.\n', sep='')
 if(params$journal.only=='Yes'){cat('Journals only.\n', sep='')} 
+if(params$flag.OA==TRUE){cat("Open Access publications highlighted using a '+' at the start of the reference.\n", sep='')} 
 cat('  \n') # line break
 papers = my.filter(results, max.authors=params$max.authors, order=params$order,
                    journal.only=params$journal.only, years.since=params$years.since,
-                   spacer=params$spacer)
-# Harvard
+                   spacer=params$spacer, bold.author = params$bold.author)
+
+# ARC - different ordering
+if(params$style == 'ARC'){
+  ## sort by output type 
+  counter = 0
+  # a) books
+  if(any(papers$Type=='book')){
+     cat('## Books\n', sep='\n')
+     books = subset(papers, type=='book')    
+     for (k in 1:nrow(books)){
+         star = ""
+        if(books$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
+       counter = counter + 1 
+       cat(counter, '. ', star, books$Authors[k], ", ", books$Year[k], ", '", books$Title[k], "', *", books$Journal[k], '*', sep='')
+       # add doi if not null
+       if(is.na(books$DOI[k])==F){cat(', doi:', books$DOI[k], sep='')}
+     }
+  }
+  # b) journal articles
+  if(any(papers$Type=='journal-article')){
+     cat('## Journal articles\n', sep='\n')
+     journals = subset(papers, type=='journal-article')    
+     for (k in 1:nrow(journals)){
+         star = ""
+        if(journals$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
+       counter = counter + 1 
+       cat(counter, '. ', star, journals$Authors[k], ", ", journals$Year[k], ", '", journals$Title[k], "', *", journals$Journal[k], '*', sep='')
+       # add doi if not null
+       if(is.na(journals$DOI[k])==F){cat(', doi:', journals$DOI[k], sep='')}
+      cat('  \n', sep='') # line break
+    }
+  }
+  # c) conferences - to do
+    if(any(papers$Type=='journal-article')){
+     cat('## Journal articles\n', sep='\n')
+     journals = subset(papers, type=='journal-article')    
+     for (k in 1:nrow(journals)){
+         star = ""
+        if(journals$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
+       counter = counter + 1 
+       cat(counter, '. ', star, journals$Authors[k], ", ", journals$Year[k], ", '", journals$Title[k], "', *", journals$Journal[k], '*', sep='')
+       # add doi if not null
+       if(is.na(journals$DOI[k])==F){cat(', doi:', journals$DOI[k], sep='')}
+      cat('  \n', sep='') # line break
+    }
+  }
+  # d) other - to do
+    if(any(papers$Type !='journal-article')){
+     cat('## Journal articles\n', sep='\n')
+     other = subset(papers, type %in% c('journal-article','book','conference')==F)    
+     for (k in 1:nrow(journals)){
+         star = ""
+        if(other$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
+       counter = counter + 1 
+       cat(counter, '. ', star, other$Authors[k], ", ", other$Year[k], ", '", other$Title[k], "', *", other$Journal[k], '*', sep='')
+       # add doi if not null
+       if(is.na(other$DOI[k])==F){cat(', doi:', other$DOI[k], sep='')}
+      cat('  \n', sep='') # line break
+    }
+  }
+} # end of ARC if
+
+# Harvard/APA
+if(params$style != 'ARC'){
 for (k in 1:nrow(papers)){
+  star = ""
+  if(papers$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
 if(params$style == 'Harvard'){
-  col = 'black'
-  if(papers$OA[k]==T){col = 'blue'}
-  cat('- ', papers$Authors[k], ", ", papers$Year[k], ", '", papers$Title[k], "', *", papers$Journal[k], '*', sep='')
+  cat('- ', star, papers$Authors[k], ", ", papers$Year[k], ", '", papers$Title[k], "', *", papers$Journal[k], '*', sep='')
   # add volume/issue/doi if not null
   if(is.na(papers$Volume[k])==F){cat(', vol. ', papers$Volume[k], sep='')}  
   if(is.na(papers$Issue[k])==F){cat(', no. ', papers$Issue[k], sep='')}  
@@ -84,9 +157,9 @@ if(params$style == 'Harvard'){
     cat(', pp. ', pages, sep='')
   }  
   if(is.na(papers$DOI[k])==F){cat(', doi:', papers$DOI[k], sep='')}
-}# end of Harvard
+} # end of Harvard
 if(params$style == 'APA'){
-  cat('- ', papers$Authors[k], " (", papers$Year[k], "). ", papers$Title[k], '. *', papers$Journal[k], '*', sep='')
+  cat('- ', star, papers$Authors[k], " (", papers$Year[k], "). ", papers$Title[k], '. *', papers$Journal[k], '*', sep='')
   # add volume/issue/doi if not null
   if(is.na(papers$Volume[k])==F){cat(', **', papers$Volume[k], '**', sep='')}  
   if(is.na(papers$Pages[k])==F){
@@ -96,6 +169,7 @@ if(params$style == 'APA'){
   }  
   if(is.na(papers$DOI[k])==F){cat(' doi:', papers$DOI[k], sep='')}
 } # end of APA
- cat('  \n') # line break
+  cat('  \n') # line break
 } # end of for loop
+} # end of not ARC if
 ```

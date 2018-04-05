@@ -22,7 +22,7 @@ Sys.setenv(ORCID_TOKEN=x)
 # orcid.id='0000-0003-3637-2423' # Anisa
 
 # main function
-my.orcid = function(orcid.id='0000-0002-2358-2440'){
+my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   ret = list() # start with blank output
 
   # a) select person
@@ -59,7 +59,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){
         }
       }
       if(nrow(this.id)==0){
-        cat('No doi,',k,'\n')
+        #cat('No doi,',k,'\n')
         this.frame = NULL
       }
       # concatenate
@@ -79,6 +79,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){
   # d) get nicely formatted data for papers with a DOIs using crossref
   cdata.nonbibtex = cr_works(dois)$data
   # add Open Access status (March 2018)
+  cdata.nonbibtex$OA = NA
   cdata.nonbibtex$OA = oadoi_fetch(dois=cdata.nonbibtex$DOI, email='a.barnett@qut.edu.au')$is_oa
   
   # e) format papers with separate matrix for authors ###
@@ -178,10 +179,15 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){
   middle1  = paste(bio[[1]]$name$`given-names`$value, ' [A-Z] ', 
                   bio[[1]]$name$`family-name`$value, sep='')
   name.to.search = tolower(c(name, reverse, simple, s0, s1, s2, s3, s4, s5, s6, middle, middle1))
-  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(authors[,1])) # NEED TO CHANGE TO APPROXIMATE MATCHING, SEE TIERNEY
+  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(authors[,1])) # first column of authors; NEED TO CHANGE TO APPROXIMATE MATCHING, SEE TIERNEY
   papers$First.author = 0
   papers$First.author[index] = 1
-
+  
+  # work out author order - so that it can be bolded in report
+  matches = str_match(pattern=paste(name.to.search, sep='', collapse='|'), string=tolower(authors))
+  matches = matrix(matches, nrow=nrow(papers))
+  author.order = (is.na(matches)==F)%*%1:ncol(matches) # which columns are not zero
+  
   # for appearances
   papers$Title = as.character(papers$Title)
   papers$Journal = as.character(papers$Journal)
@@ -210,6 +216,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){
   ret$name = name
   ret$papers = papers
   ret$authors = authors # separate matrix so that authors can be selected
+  ret$author.order = author.order
 
 # return
 return(ret)

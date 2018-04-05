@@ -115,7 +115,9 @@ shinyServer(function(input, output) {
                     journal.only = input$journal.only,
                     order = input$order,
            max.authors = input$max.authors,
-           style = input$style)
+           style = input$style,
+           flag.OA = input$flag.OA,
+           bold.author = input$bold.author)
       
       out = rmarkdown::render(
           input = tempReport,
