@@ -55,7 +55,8 @@ p("You might also like my ", tags$a(href="https://aushsi.shinyapps.io/work-pals/
                            "Issue" = "Issue",
                            "Pages" = "Pages",
                            "Year" = "Year",
-                           "DOI" = "DOI"), 
+                           "DOI" = "DOI",
+                           "Open Access" = "OA"), 
                          selected = c('Title','Journal','Year')),
       
       checkboxInput(inputId="additional", label="Show additional options",

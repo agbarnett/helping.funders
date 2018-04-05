@@ -74,7 +74,8 @@ if(params$order=='dyear'){papers.sorted = 'descending year'}
 if(params$order=='journal'){papers.sorted = 'journal name'}
 cat('Papers sorted by ', papers.sorted, '.\n', sep='')
 if(params$journal.only=='Yes'){cat('Journals only.\n', sep='')} 
-if(params$flag.OA==TRUE){cat("Open Access publications highlighted using a '+' at the start of the reference.\n", sep='')} 
+if(params$flag.OA==TRUE&results$oa.warning==FALSE){cat("Open Access publications highlighted using a '+' at the start of the reference.\n", sep='')} 
+if(params$flag.OA==TRUE&results$oa.warning==TRUE){cat("Open Access data did not load; try again.\n", sep='')} 
 cat('  \n') # line break
 papers = my.filter(results, max.authors=params$max.authors, order=params$order,
                    journal.only=params$journal.only, years.since=params$years.since,

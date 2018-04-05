@@ -64,8 +64,13 @@ shinyServer(function(input, output) {
   output$h_text <- renderText({
     papers = my.filter()
     # percent open access
-    p.OA = 0
-    if(is.null(papers)==F){p.OA = round(100* sum(papers$OA) / nrow(papers))}
+    if(results()$oa.warning==F){
+      p.OA = 0
+      if(is.null(papers)==F){p.OA = round(100* sum(papers$OA) / nrow(papers))}
+    }
+    if(results()$oa.warning==T){ # OA routine did not work
+      p.OA = '*OA routine did not work, try again*'
+    }
     # percent first author
     p.first = 0
     if(is.null(papers)==F){p.first = round(100* sum(papers$First.author==1) / nrow(papers))}

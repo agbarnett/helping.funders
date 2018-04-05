@@ -20,6 +20,7 @@ Sys.setenv(ORCID_TOKEN=x)
 # orcid.id='0000-0001-7733-287X'
 # orcid.id='0000-0001-7564-073X' # Paul
 # orcid.id='0000-0003-3637-2423' # Anisa
+# orcid.id='0000-0002-6951-7126'
 
 # main function
 my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
@@ -46,7 +47,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   ids = NULL
   for (k in 1:nrow(d)){
     this = d[k,]$`external-ids.external-id`[[1]]
-    if(is.null(this)==F){
+    if(is.null(this)==F & length(this)>0){
       # First get doi
       this.id = subset(this, `external-id-type`=='doi')
       if(nrow(this.id)==1){
@@ -80,7 +81,20 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   cdata.nonbibtex = cr_works(dois)$data
   # add Open Access status (March 2018)
   cdata.nonbibtex$OA = NA
-  cdata.nonbibtex$OA = oadoi_fetch(dois=cdata.nonbibtex$DOI, email='a.barnett@qut.edu.au')$is_oa
+  # run with fail
+  n.match = count = 0
+  while(n.match != nrow(cdata.nonbibtex)&count<3){ # run three times max
+    OAs = purrr::map_df(cdata.nonbibtex$DOI, 
+                plyr::failwith(f = function(x) roadoi::oadoi_fetch(x, email = "a.barnett@qut.edu.au")))
+    n.match = nrow(OAs)
+    count = count + 1
+    #cat(n.match, ', count', count, '\n') # tracking warning
+  }
+  if(n.match != nrow(cdata.nonbibtex)){oa.warning = T}
+  if(n.match == nrow(cdata.nonbibtex)){
+    oa.warning = F
+    cdata.nonbibtex$OA = OAs$is_oa 
+  }
   
   # e) format papers with separate matrix for authors ###
   papers = bib.authors = NULL
@@ -215,6 +229,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   # return
   ret$name = name
   ret$papers = papers
+  ret$oa.warning = oa.warning
   ret$authors = authors # separate matrix so that authors can be selected
   ret$author.order = author.order
 
