@@ -86,9 +86,10 @@ if(params$style == 'ARC'){
   ## sort by output type 
   counter = 0
   # a) books
-  if(any(papers$Type=='book')){
+  index = grep('book', tolower(papers$Type))
+  if(length(index)>0){
      cat('## Books\n', sep='\n')
-     books = subset(papers, type=='book')    
+     books = papers[index,]
      for (k in 1:nrow(books)){
          star = ""
         if(books$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
@@ -99,9 +100,10 @@ if(params$style == 'ARC'){
      }
   }
   # b) journal articles
-  if(any(papers$Type=='journal-article')){
+  index = grep('journal', tolower(papers$Type))
+  if(length(index)>0){
      cat('## Journal articles\n', sep='\n')
-     journals = subset(papers, type=='journal-article')    
+     journals = papers[index,]
      for (k in 1:nrow(journals)){
          star = ""
         if(journals$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
@@ -112,25 +114,27 @@ if(params$style == 'ARC'){
       cat('  \n', sep='') # line break
     }
   }
-  # c) conferences - to do
-    if(any(papers$Type=='journal-article')){
+  # c) conferences 
+  index = grep('conference', tolower(papers$Type))
+  if(length(index)>0){
      cat('## Journal articles\n', sep='\n')
-     journals = subset(papers, type=='journal-article')    
-     for (k in 1:nrow(journals)){
+     conferences = conferences[index,]
+     for (k in 1:nrow(conferences)){
          star = ""
-        if(journals$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
+        if(conferences$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
        counter = counter + 1 
-       cat(counter, '. ', star, journals$Authors[k], ", ", journals$Year[k], ", '", journals$Title[k], "', *", journals$Journal[k], '*', sep='')
+       cat(counter, '. ', star, conferences$Authors[k], ", ", conferences$Year[k], ", '", conferences$Title[k], "', *", conferences$Journal[k], '*', sep='')
        # add doi if not null
-       if(is.na(journals$DOI[k])==F){cat(', doi:', journals$DOI[k], sep='')}
+       if(is.na(conferences$DOI[k])==F){cat(', doi:', conferences$DOI[k], sep='')}
       cat('  \n', sep='') # line break
     }
   }
-  # d) other - to do
-    if(any(papers$Type !='journal-article')){
-     cat('## Journal articles\n', sep='\n')
-     other = subset(papers, type %in% c('journal-article','book','conference')==F)    
-     for (k in 1:nrow(journals)){
+  # d) other
+  index = grep('conference|journal|book', tolower(papers$Type), invert = T)
+  if(length(index)>0){
+     cat('## Other\n', sep='\n')
+     other = papers[index,]
+     for (k in 1:nrow(other)){
          star = ""
         if(other$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
        counter = counter + 1 
