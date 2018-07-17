@@ -28,7 +28,7 @@ p("You might also like my ", tags$a(href="https://aushsi.shinyapps.io/work-pals/
       numericInput(inputId = "years.since",
                               label = "Earliest year of papers:",
                               min = 1970,
-                              max = 2017,
+                              max = 2018,
                               step = 1,
                               value = 2013),
       
