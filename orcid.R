@@ -20,7 +20,8 @@ Sys.setenv(ORCID_TOKEN=x)
 # orcid.id='0000-0001-7733-287X'
 # orcid.id='0000-0001-7564-073X' # Paul
 # orcid.id='0000-0003-3637-2423' # Anisa
-# orcid.id='0000-0002-6951-7126'
+# orcid.id='0000-0002-6020-9733' # Lionel
+# orcid.id='0000-0002-0630-3825'
 
 # main function
 my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
@@ -44,6 +45,8 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
     return(ret)
   }
   
+  # hide all this in a dummy function for now, as it's not used
+  use.ids = function(){
   ids = NULL
   for (k in 1:nrow(d)){
     this = d[k,]$`external-ids.external-id`[[1]]
@@ -67,6 +70,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
       ids = rbind(ids, this.frame)
     }
   }
+  } # end of dummy use.ids function
   
   #unlist(plyr::llply(d$`external-ids.external-id`, function(x){`external-id-value`}))
          
@@ -93,7 +97,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   if(n.match != nrow(cdata.nonbibtex)){oa.warning = T}
   if(n.match == nrow(cdata.nonbibtex)){
     oa.warning = F
-    cdata.nonbibtex$OA = OAs$is_oa 
+    cdata.nonbibtex$OA = OAs$is_oa  # Is there an OA copy (logical)?
   }
   
   # e) format papers with separate matrix for authors ###
@@ -135,6 +139,10 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
       year = format(as.Date(idates), '%Y')
       ## journal
       journal = cdata.nonbibtex$container.title[k] 
+      # Identify bioRxiv (couldn't find another way, needs updating)
+      if(is.na(journal)){
+        if(cdata.nonbibtex$publisher[k] == "Cold Spring Harbor Laboratory")(journal='bioRxiv')
+      }
       # title
       title = as.character(cdata.nonbibtex$title[k])
       # volume/issue/pages
