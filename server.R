@@ -14,7 +14,7 @@ shinyServer(function(input, output) {
     
     validate(
       need(nchar(id.no.spaces) == 19, 
-           paste("ORCID IDs should be 16 letters/numbers separated by three dashes, e.g., 0000-0002-2358-2440", sep=''))
+           paste("ORCID IDs should be 16 numbers or X's separated by three dashes, e.g., 0000-0001-7564-073X", sep=''))
     )
     withProgress(message = 'Getting data from ORCID/Crossref', 
                  detail = 'This may take a while...', value=0, {

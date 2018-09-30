@@ -87,45 +87,45 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   cdata.nonbibtex$OA = NA
   # run with fail
   n.match = count = 0
-  while(n.match != nrow(cdata.nonbibtex)&count<3){ # run three times max
+  while(n.match != nrow(cdata.nonbibtex)&count < 3){ # run three times max
     OAs = purrr::map_df(cdata.nonbibtex$DOI, 
                 plyr::failwith(f = function(x) roadoi::oadoi_fetch(x, email = "a.barnett@qut.edu.au")))
     n.match = nrow(OAs)
     count = count + 1
     #cat(n.match, ', count', count, '\n') # tracking warning
   }
-  if(n.match != nrow(cdata.nonbibtex)){oa.warning = T}
+  if(n.match != nrow(cdata.nonbibtex)){oa.warning = TRUE}
   if(n.match == nrow(cdata.nonbibtex)){
-    oa.warning = F
-    cdata.nonbibtex$OA = OAs$is_oa  # Is there an OA copy (logical)?
+    oa.warning = FALSE
+    cdata.nonbibtex$OA = OAs$is_oa  # Is there an OA copy? (logical)
   }
   
   # e) format papers with separate matrix for authors ###
   papers = bib.authors = NULL
   # e2) ... now for non bibtex from crossref
   authors.crossref = NULL
-  if(nrow(cdata.nonbibtex)>0){
+  if(nrow(cdata.nonbibtex) > 0){
     authors.crossref = matrix(data='', nrow=nrow(cdata.nonbibtex), ncol=300) # start with huge matrix
     for (k in 1:nrow(cdata.nonbibtex)){ # loop needed
       # authors, convert from tibble
       fauthors = cdata.nonbibtex$author[[k]]
-      fam.only = F # flag for family only
-      if(is.null(fauthors)==F){
-        if('family' %in% names(fauthors) & length(names(fauthors))==1){
+      fam.only = FALSE # flag for family only
+      if(is.null(fauthors)==FALSE){
+        if('family' %in% names(fauthors) & length(names(fauthors))<=2){ # changed to allow 'sequence' (Sep 2018)
           fauthors = fauthors$family
-          fam.only = T
+          fam.only = TRUE
         }
       }
-      if(fam.only==F & 'given' %in% names(fauthors) == F & is.null(fauthors)==F){
-        fauthors = filter(fauthors, is.na(name)==F) # not missing
+      if(fam.only==FALSE & ('given' %in% names(fauthors) == FALSE) & is.null(fauthors)==FALSE){
+        fauthors = dplyr::filter(fauthors, is.na(name)==FALSE) # not missing
         fauthors = paste(fauthors$name)
       }
-      if(fam.only==F & 'given' %in% names(fauthors) & is.null(fauthors)==F){
-        fauthors = filter(fauthors, is.na(family)==F) # not missing
+      if(fam.only==FALSE & 'given' %in% names(fauthors) & is.null(fauthors)==FALSE){
+        fauthors = filter(fauthors, is.na(family)==FALSE) # not missing
         fauthors = select(fauthors, given, family)
         fauthors = paste(fauthors$given, fauthors$family) # does include NA - to fix
       }
-      if(is.null(fauthors)==F){
+      if(is.null(fauthors)==FALSE){
         if(length(fauthors)>ncol(authors.crossref)){fauthors = fauthors[1:ncol(authors.crossref)]} # truncate where author numbers are huge (jan 2018)
         authors.crossref[k, 1:length(fauthors)] = fauthors
       }
@@ -170,11 +170,13 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   if(nrow(papers)==1){authors=matrix(authors); authors=t(authors)}
 
   # remove duplicates (again, just a safety net, should have been caught earlier)
-  if(nrow(papers)>1){
+  if(nrow(papers) > 1){
     dups = duplicated(tolower(papers$Title))
     papers = papers[!dups,]
     authors = authors[!dups,]
   }
+  
+  # remove later versions of paper with almost identical DOI _ TO DO
   
   ## count first author papers
   # make alternative versions of name
