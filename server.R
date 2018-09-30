@@ -119,6 +119,8 @@ shinyServer(function(input, output) {
                     spacer = input$spacer,
                     journal.only = input$journal.only,
                     order = input$order,
+                    extra.order = input$extra.order,
+                    bullets = input$bullets,
            max.authors = input$max.authors,
            style = input$style,
            flag.OA = input$flag.OA,

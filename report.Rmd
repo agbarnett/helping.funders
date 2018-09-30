@@ -12,6 +12,8 @@ params:
   order: NA
   max.authors: NA
   style: NA
+  bullets: NA
+  extra.order: NA
   flag.OA: NA
   bold.author: NA
 ---
@@ -29,7 +31,7 @@ my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', 
     authors = orcid.input$authors
     if(bold.author==T){
       for (k in 1:nrow(authors)){
-         authors[k,orcid.input$author.order[k]] = paste('**', authors[k,orcid.input$author.order[k]], '**', sep='') # add bolding
+         authors[k, orcid.input$author.order[k]] = paste('**', authors[k, orcid.input$author.order[k]], '**', sep='') # add bolding
       }
     }
     # add authors
@@ -38,13 +40,13 @@ my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', 
       upper.limit = min(c(max.authors, ncol(authors)))
       res$Authors = apply(authors[, 1:upper.limit], 1, paste5, collapse=spacer) # 
     } 
-    # add et al
+    # add 'et al'
     if(max.authors < ncol(orcid.input$authors)){ # don't add if at max author number
       index = orcid.input$authors[, max.authors+1] != '' # something in next author
       res$Authors[index] = paste(res$Authors[index], spacer, 'et al', sep='')
     }
     # filter by year:
-    res = subset(res, Year>= years.since) 
+    res = subset(res, Year >= years.since) 
     # journal articles only
     if(journal.only=='Yes'){
       index = grep(pattern='journal', tolower(res$Type)) # search for journal in type
@@ -64,8 +66,13 @@ my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', 
 ```
 
 ```{r list.papers, results='asis'}
-star.to.use = "\\+ " # how to highlight Open Access papers
+# bullets (turning words into TRUE/FALSE)
+use.bullets = FALSE
+if(params$bullets=='bullets'){use.bullets = TRUE}
+# how to highlight Open Access papers:
+star.to.use = "\\+ " 
 results = my.orcid(params$orcid.id)
+# blurb at top
 cat('Publication report for ',results$name,'.\n', sep='')
 cat('  \n') # line break
 cat('Earliest year of papers =', params$years.since, '.\n', sep='')
@@ -81,8 +88,14 @@ papers = my.filter(results, max.authors=params$max.authors, order=params$order,
                    journal.only=params$journal.only, years.since=params$years.since,
                    spacer=params$spacer, bold.author = params$bold.author)
 
+# no extra ordering
+if(params$extra.order == 'None'){
+  to.display = display.papers(papers, in.style=params$style, star.to.use=star.to.use, flag.OA=params$flag.OA, bullets=use.bullets)
+  cat(to.display)
+}
+
 # ARC - different ordering
-if(params$style == 'ARC'){
+if(params$extra.order == 'ARC'){
   ## sort by output type 
   counter = 0
   # a) books
@@ -146,35 +159,38 @@ if(params$style == 'ARC'){
   }
 } # end of ARC if
 
-# Harvard/APA
-if(params$style != 'ARC'){
-for (k in 1:nrow(papers)){
-  star = ""
-  if(papers$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
-if(params$style == 'Harvard'){
-  cat('- ', star, papers$Authors[k], ", ", papers$Year[k], ", '", papers$Title[k], "', *", papers$Journal[k], '*', sep='')
-  # add volume/issue/doi if not null
-  if(is.na(papers$Volume[k])==F){cat(', vol. ', papers$Volume[k], sep='')}  
-  if(is.na(papers$Issue[k])==F){cat(', no. ', papers$Issue[k], sep='')}  
-  if(is.na(papers$Pages[k])==F){
-    pages = papers$Pages[k]
-    pages = gsub('--', '-', pages) # try to get en dash?
-    cat(', pp. ', pages, sep='')
-  }  
-  if(is.na(papers$DOI[k])==F){cat(', doi:', papers$DOI[k], sep='')}
-} # end of Harvard
-if(params$style == 'APA'){
-  cat('- ', star, papers$Authors[k], " (", papers$Year[k], "). ", papers$Title[k], '. *', papers$Journal[k], '*', sep='')
-  # add volume/issue/doi if not null
-  if(is.na(papers$Volume[k])==F){cat(', **', papers$Volume[k], '**', sep='')}  
-  if(is.na(papers$Pages[k])==F){
-    pages = papers$Pages[k]
-    pages = gsub('--', '-', pages) # try to get en dash?
-    cat(', ', pages, sep='')
-  }  
-  if(is.na(papers$DOI[k])==F){cat(' doi:', papers$DOI[k], sep='')}
-} # end of APA
-  cat('  \n') # line break
-} # end of for loop
-} # end of not ARC if
+# split by author order - different ordering
+if(params$extra.order == 'split'){
+
+  # a) First author
+  if(sum(papers$First.author) > 0){
+    cat('## First author\n', sep='\n')
+    this = dplyr::filter(papers, First.author==1)
+    to.display = display.papers(this, in.style=params$style, star.to.use=star.to.use, flag.OA=params$flag.OA, bullets=use.bullets)
+    cat(to.display)
+    cat('\n\n')
+    counter = nrow(this) # for numbers instead of bullets
+  }
+  
+  # b) Last author
+  if(sum(papers$Last.author) > 0){
+    cat('## Last author\n', sep='\n')
+    this = dplyr::filter(papers, Last.author==1)
+    to.display = display.papers(this, in.style=params$style, star.to.use=star.to.use, flag.OA=params$flag.OA, bullets=use.bullets, counter.start=counter)
+    cat(to.display)
+    cat('\n\n')
+    counter = counter + nrow(this) # for numbers instead of bullets
+  }
+  
+  # c) Neither first nor last author
+  this = dplyr::filter(papers, Last.author==0 & First.author==0)
+  if(nrow(this) > 0){
+    cat('## Neither first nor last author\n', sep='\n')
+    to.display = display.papers(this, in.style=params$style, star.to.use=star.to.use, flag.OA=params$flag.OA, bullets=use.bullets, counter.start=counter)
+    cat(to.display)
+    cat('\n')
+  }
+  
+} # end of `split` if
+
 ```

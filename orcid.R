@@ -201,9 +201,17 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   middle1  = paste(bio[[1]]$name$`given-names`$value, ' [A-Z] ', 
                   bio[[1]]$name$`family-name`$value, sep='')
   name.to.search = tolower(c(name, reverse, simple, s0, s1, s2, s3, s4, s5, s6, middle, middle1))
-  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(authors[,1])) # first column of authors; NEED TO CHANGE TO APPROXIMATE MATCHING, SEE TIERNEY
+  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(authors[,1])) # first column of authors
   papers$First.author = 0
   papers$First.author[index] = 1
+# last author
+  authors.na = authors
+  authors.na[authors.na==''] = NA # version with missing authors
+  last = apply(authors.na, 1, function(x) tail(na.omit(x), 1)) # extract last authors
+  index = grep(paste(name.to.search, sep='', collapse='|'), tolower(last)) # 
+  papers$Last.author = 0
+  papers$Last.author[index] = 1
+  papers$Last.author[papers$First.author == 1] = 0 # Single author papers are only flagged as first author papers
   
   # work out author order - so that it can be bolded in report
   matches = str_match(pattern=paste(name.to.search, sep='', collapse='|'), string=tolower(authors))
