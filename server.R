@@ -88,8 +88,8 @@ shinyServer(function(input, output) {
     if(nrow(papers)>0){
     # ordering 
     papers$Year = as.numeric(papers$Year) # for sorting
-    if(input$order=='ayear'){papers = arrange(papers, -Year)} #
-    if(input$order=='dyear'){papers = arrange(papers, Year)} # 
+    if(input$order=='ayear'){papers = arrange(papers, Year)} #
+    if(input$order=='dyear'){papers = arrange(papers, -Year)} # 
     if(input$order=='journal'){papers = arrange(papers, Journal, Year)} # 
     papers$Year = as.character(papers$Year) # looks better as character
     ## select columns and return
