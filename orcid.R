@@ -85,16 +85,19 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   # remove F1000 DOIs where there is second version (keep latest version)
   not.f1000 = dois[!str_detect(string=dois, pattern='f1000')]
   f1000 = dois[str_detect(string=dois, pattern='f1000')]
-  split.f1000 = str_split(f1000, pattern='\\.', n=Inf, simplify = TRUE) # split by .
-  split.f1000 = data.frame(split.f1000, stringsAsFactors = F)
-  split.f1000$X3 = as.numeric(split.f1000$X3)
-  split.f1000$X4 = as.numeric(split.f1000$X4)
-  split.f1000 = dplyr::group_by(split.f1000, X3) %>%
-    dplyr::arrange(X3, X4) %>%
-    filter(row_number()==n()) %>%
-    mutate(doi = paste(X1, '.', X2, '.', X3, '.', X4, sep=''))
-  # concatenate back F1000 and not F1000
-  dois = c(not.f1000, split.f1000$doi)
+  if(length(f1000)>0){ # only if some F1000 journals
+    split.f1000 = str_split(f1000, pattern='\\.', n=Inf, simplify = TRUE) # split by .
+    split.f1000 = data.frame(split.f1000, stringsAsFactors = F)
+    split.f1000$X3 = as.numeric(split.f1000$X3)
+    split.f1000$X4 = as.numeric(split.f1000$X4)
+    split.f1000 = dplyr::group_by(split.f1000, X3) %>%
+      dplyr::arrange(X3, X4) %>%
+      filter(row_number()==n()) %>%
+      mutate(doi = paste(X1, '.', X2, '.', X3, '.', X4, sep=''))
+    # concatenate back F1000 and not F1000
+    dois = c(not.f1000, split.f1000$doi)
+  }
+  if(length(f1000)==0){dois = not.f1000}
   
   # d) get nicely formatted data for papers with a DOIs using crossref
   cdata.nonbibtex = cr_works(dois)$data
