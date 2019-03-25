@@ -28,9 +28,9 @@ shinyUI(fluidPage(
       numericInput(inputId = "years.since",
                    label = "Earliest year of papers:",
                    min = 1970,
-                   max = 2018,
+                   max = 2019,
                    step = 1,
-                   value = 2013),
+                   value = 2015),
       
       numericInput(inputId = "max.authors",
                    label = "Maximum number of authors:",
@@ -41,8 +41,8 @@ shinyUI(fluidPage(
       
       radioButtons(inputId = "order", 
                    label = "Order papers by:",
-                   choices = c("Ascending year" = "ayear",
-                               "Descending year" = "dyear",
+                   choices = c("Most recent at top" = "dyear",
+                               "Most recent at bottom" = "ayear",
                                "Journal name" = "journal"), 
                    selected = 'ayear'),
       
