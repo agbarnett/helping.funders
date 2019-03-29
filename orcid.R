@@ -262,6 +262,11 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   # replace NAs is authors with ''
   authors[is.na(authors)==T] = ''
   
+  # give a consistent number of columns to author matrix
+  blank = matrix("", nrow=nrow(authors), ncol=50) # 50 authors max
+  blank[, 1:ncol(authors)] = authors
+  authors = blank
+  
   # return
   ret$name = name
   ret$papers = papers

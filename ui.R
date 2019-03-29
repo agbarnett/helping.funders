@@ -1,5 +1,5 @@
 # UI for helping.funders
-# June 2017
+# March 2018
 
 shinyUI(fluidPage(
   
@@ -14,6 +14,8 @@ shinyUI(fluidPage(
   p("Funders should stop asking researchers to paste or type their papers into an application form. ", 
     "If any funders are interested I can set up a batch process just ", tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' me. Also please ', tags$a(href='mailto:a.barnett@qut.edu.au', 'e-mail'), ' if you find a bug or have any ideas for improvements. Thanks to Scott Chamberlain for help with R.', sep=''),
   
+  p("If you want results for a group of researchers then upload a plain text file with one orcid ID per row, with no headers or footers (", tags$a(href="https://github.com/agbarnett/helping.funders/blob/master/example.file.txt", "see here"), "for an example file). This will examine the groups` combined publications after removing duplicates.", sep=''),
+  
   strong("If papers are missing or no papers appear then please first check your ", tags$a(href="https://orcid.org/", "ORCID profile"),"as that may need updating."),
   div(p(HTML(paste0("The list will only include public works data on the ORCID record that have a ", a(href="https://en.wikipedia.org/wiki/Digital_object_identifier", "DOI"), ". Please check your papers as I cannot guarantee that lists are correct or complete.")))),
   
@@ -22,8 +24,14 @@ shinyUI(fluidPage(
   sidebarLayout(
     sidebarPanel(
       textInput(inputId = "orcid.id",
-                label = "ORCID ID (16 digits with 3 dashes):",
+                label = "ORCID ID (16 digits with 3 dashes) ...",
                 value='0000-0003-3637-2423'), # Anisa
+      
+      fileInput(inputId = 'orcid.file',
+                accept = c(
+                  "text/comma-separated-values,text/plain",
+                  ".txt"),
+                label = '... or attach text file with one or more ORCID IDs'),
       
       numericInput(inputId = "years.since",
                    label = "Earliest year of papers:",
