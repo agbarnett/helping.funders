@@ -5,5 +5,4 @@ The main file is `orcid.R`, which takes an ORCID ID and creates the publiction d
 
 My wishlist of additions:
 * Get the Google Scholar version working on a publicly available shiny server (see https://github.com/agbarnett/scholar.shiny)
-* Add a plot of cumulative paper numbers over time, perhaps with a comparison of "similar" researchers
-* Add in data from Mendeley and CiteULike on what papers are being read
+* Add in data from Mendeley on what papers are being read
