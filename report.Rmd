@@ -100,7 +100,7 @@ if(is.null(inFile) == FALSE){ # multiple
   
 # blurb at top
 if(is.null(inFile) == TRUE){cat('Publication report for ', results$name, '.\n', sep='')} # single
-if(is.null(inFile) == FALSE){cat('Combined publication report for ', paste(results$name, sep=', '), '.\n', sep='')} # multiple
+if(is.null(inFile) == FALSE){cat('Combined publication report for ', paste(results$name, collapse=', '), '.\n', sep='')} # multiple
 cat('  \n') # line break
 cat('Earliest year of papers =', params$years.since, '.\n', sep='')
 papers.sorted = 'ascending year'
