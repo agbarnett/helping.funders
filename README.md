@@ -1,5 +1,5 @@
 # helping.funders
-Helping funders and researchers by creating a list of a researcher's publication output using R and shiny. It can also be used to create a list for a group of reserachers by uploading a file with multiple ORCID IDs (see `example.file.txt`).
+Helping funders and researchers by creating a list of a researcher's publication output using R and shiny. It can also be used to create a combined list for a group of researchers by uploading a file with multiple ORCID IDs (see `example.file.txt`).
 
 The main file is `orcid.R`, which takes an ORCID ID and creates the publiction data. See `global.R` for a list of required R packages. The key R package is `rorcid`.
 
