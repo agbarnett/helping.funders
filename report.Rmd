@@ -103,8 +103,8 @@ if(is.null(inFile) == TRUE){cat('Publication report for ', results$name, '.\n', 
 if(is.null(inFile) == FALSE){cat('Combined publication report for ', paste(results$name, collapse=', '), '.\n', sep='')} # multiple
 cat('  \n') # line break
 cat('Earliest year of papers =', params$years.since, '.\n', sep='')
-papers.sorted = 'ascending year'
-if(params$order=='dyear'){papers.sorted = 'descending year'}
+papers.sorted = 'earliest papers first'
+if(params$order=='dyear'){papers.sorted = 'latest papers first'}
 if(params$order=='journal'){papers.sorted = 'journal name'}
 cat('Papers sorted by ', papers.sorted, '.\n', sep='')
 if(params$journal.only=='Yes'){cat('Journals only.\n', sep='')} 
