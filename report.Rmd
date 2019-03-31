@@ -6,6 +6,9 @@ fontsize: 12pt
 output: word_document
 params:
   orcid.id: NA
+  orcid.file:
+    input: NA
+    value: NA
   years.since: NA
   spacer: NA
   journal.only: NA
@@ -71,7 +74,30 @@ use.bullets = FALSE
 if(params$bullets=='bullets'){use.bullets = TRUE}
 # how to highlight Open Access papers:
 star.to.use = "\\+ " 
-results = my.orcid(params$orcid.id)
+# single or multiple ORCID ids?
+  inFile = params$orcid.file
+if(is.null(inFile) == TRUE){results = my.orcid(params$orcid.id)} # single
+if(is.null(inFile) == FALSE){ # multiple
+  multiple.orcids = read.table(inFile$datapath, header=FALSE, stringsAsFactors=FALSE) # get the ORCIDs from the file
+  n.people = nrow(multiple.orcids)
+  
+  # Loop through people
+  results = list()
+  results$papers = results$authors = results$auth.order = results$name = results$oa.warning= NULL
+  for (k in 1:n.people){
+    id.no.spaces = multiple.orcids$V1[k]
+    id.no.spaces = id.no.spaces[id.no.spaces!=''] # remove missing IDs
+    id.no.spaces = gsub(' $', '', id.no.spaces) # remove trailing space
+    o = my.orcid(orcid.id = id.no.spaces)
+    # concatenate 
+    results$papers = rbind(results$papers, o$papers)
+    results$authors = rbind(results$authors, o$authors) 
+    results$auth.order = c(results$auth.order, o$auth.order)
+    results$name = c(results$name, o$name)
+    results$oa.warning = c(results$oa.warning, o$oa.warning)
+  } # end of people loop
+}
+  
 # blurb at top
 cat('Publication report for ',results$name,'.\n', sep='')
 cat('  \n') # line break

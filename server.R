@@ -173,6 +173,7 @@ shinyServer(function(input, output) {
       file.copy("report.Rmd", tempReport, overwrite = TRUE)
       
       params = list(orcid.id = input$orcid.id, 
+                    orcid.file = input$orcid.file, 
                     years.since = input$years.since,
                     spacer = input$spacer,
                     journal.only = input$journal.only,
