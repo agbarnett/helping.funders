@@ -18,6 +18,7 @@ Sys.setenv(ORCID_TOKEN=x)
 # orcid.id ='0000-0001-6339-0374' # me
 # orcid.id = '0000-0002-5559-3267' # nick
 # orcid.id='0000-0001-7733-287X'
+# orcid.id = '0000-0002-5808-4249' #Jenny
 # orcid.id='0000-0001-7564-073X' # Paul
 # orcid.id='0000-0003-3637-2423' # Anisa
 # orcid.id='0000-0002-6020-9733' # Lionel
@@ -79,7 +80,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   #  unlist(plyr::llply(aff, function(x){x$'affilname'})
   #}
   dois = identifiers(d, type='doi') # get DOIs, not available for all papers
-  dois = dois[duplicated(dois)==FALSE] # remove duplicates
+  dois = dois[duplicated(tolower(dois))==FALSE] # remove duplicates
   #eids = identifiers(d, type='eid') # get Scopus IDs, not available for all papers
   
   # remove F1000 DOIs where there is second version (keep latest version)
@@ -264,6 +265,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   
   # give a consistent number of columns to author matrix
   blank = matrix("", nrow=nrow(authors), ncol=50) # 50 authors max
+  if(ncol(authors)>50){authors = authors[,1:50]} # truncate at 50 if over 50 authors on a paper
   blank[, 1:ncol(authors)] = authors
   authors = blank
   
