@@ -9,6 +9,7 @@ x <- "07073399-4dcc-47b3-a0a8-925327224519"
 Sys.setenv(ORCID_TOKEN=x)
 
 ## Test IDs
+# orcid.id = '0000-0003-4667-6623' # Harvey
 # orcid.id = '0000-0003-1602-4544'
 # orcid.id = '0000-0001-8369-1238' # Suzanne
 # orcid.id = '0000-0003-0152-4394' # Richard
@@ -29,7 +30,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   ret = list() # start with blank output
 
   # a) select person
-  bio = orcid_id(orcid = orcid.id, profile='profile') # get basics
+  bio = orcid_person(orcid = orcid.id) # get basics
   name = paste(bio[[1]]$`name`$`given-names`$value,
                bio[[1]]$`name`$`family-name`$value)
   name = gsub('  ', ' ', name) # remove double space
@@ -107,7 +108,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
   # run with fail
   n.match = count = 0
   while(n.match != nrow(cdata.nonbibtex)&count < 3){ # run three times max
-    OAs = purrr::map_df(cdata.nonbibtex$DOI, 
+    OAs = purrr::map_df(cdata.nonbibtex$doi, 
                 plyr::failwith(f = function(x) roadoi::oadoi_fetch(x, email = "a.barnett@qut.edu.au")))
     n.match = nrow(OAs)
     count = count + 1
@@ -169,7 +170,7 @@ my.orcid = function(orcid.id='0000-0002-2358-2440'){ # default here = Ginny
       issue = cdata.nonbibtex$issue[k]
       pages = cdata.nonbibtex$page[k]
       # doi
-      DOI = cdata.nonbibtex$DOI[k]
+      DOI = cdata.nonbibtex$doi[k]
       # OA
       OA = cdata.nonbibtex$OA[k]
       # type
