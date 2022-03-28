@@ -36,7 +36,7 @@ shinyUI(fluidPage(
       numericInput(inputId = "years.since",
                    label = "Earliest year of papers:",
                    min = 1970,
-                   max = 2020,
+                   max = 2022,
                    step = 1,
                    value = 2016),
       
