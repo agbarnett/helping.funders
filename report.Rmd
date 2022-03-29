@@ -27,14 +27,16 @@ params:
 
 knitr::opts_chunk$set(echo = FALSE, warnings=FALSE, comment='')
 # function to get filtered papers
-my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', journal.only='Yes', order='ayear', bold.author=T){
+my.filter = function(orcid.input, years.since=2000, max.authors=3, spacer=', ', journal.only='Yes', order='ayear', bold.author=TRUE){
     res = data.frame(NULL)
     res = orcid.input$papers
     # bold author
     authors = orcid.input$authors
-    if(bold.author==T){
+    if(bold.author==TRUE){
       for (k in 1:nrow(authors)){
-         authors[k, orcid.input$author.order[k]] = paste('**', authors[k, orcid.input$author.order[k]], '**', sep='') # add bolding
+         if(orcid.input$author.order[k] <= ncol(authors)){ # only bold if author order is in range (March 2022)
+  authors[k, orcid.input$author.order[k]] = paste('**', authors[k, orcid.input$author.order[k]], '**', sep='') # add bold
+         }
       }
     }
     # add authors
