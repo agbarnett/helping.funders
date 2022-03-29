@@ -101,7 +101,7 @@ if(is.null(inFile) == FALSE){ # multiple
 }
   
 # blurb at top
-if(is.null(inFile) == TRUE){cat('Publication report for ', results$name, '.\n', sep='')} # single
+if(is.null(inFile) == TRUE){cat('Publication report for ', str_squish(results$name), '.\n', sep='')} # single
 if(is.null(inFile) == FALSE){cat('Combined publication report for ', paste(results$name, collapse=', '), '.\n', sep='')} # multiple
 cat('  \n') # line break
 cat('Earliest year of papers =', params$years.since, '.\n', sep='')
@@ -136,7 +136,11 @@ if(params$extra.order == 'ARC'){
          star = ""
         if(books$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
        counter = counter + 1 
-       cat(counter, '. ', star, books$Authors[k], ", ", books$Year[k], ", '", books$Title[k], "', *", books$Journal[k], '*', sep='')
+       cat(counter, '. ', star, 
+           str_squish(books$Authors[k]), ", ", 
+           str_squish(books$Year[k]), ", '", 
+           str_squish(books$Title[k]), "', *", 
+           str_squish(books$Journal[k]), '*', sep='')
        # add doi if not null
        if(is.na(books$DOI[k])==F){cat(', doi:', books$DOI[k], sep='')}
      }
@@ -150,7 +154,11 @@ if(params$extra.order == 'ARC'){
          star = ""
         if(journals$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
        counter = counter + 1 
-       cat(counter, '. ', star, journals$Authors[k], ", ", journals$Year[k], ", '", journals$Title[k], "', *", journals$Journal[k], '*', sep='')
+       cat(counter, '. ', star, 
+           str_squish(journals$Authors[k]), ", ", 
+           str_squish(journals$Year[k]), ", '", 
+           str_squish(journals$Title[k]), "', *", 
+           str_squish(journals$Journal[k]), '*', sep='')
        # add doi if not null
        if(is.na(journals$DOI[k])==F){cat(', doi:', journals$DOI[k], sep='')}
       cat('  \n', sep='') # line break
@@ -165,9 +173,13 @@ if(params$extra.order == 'ARC'){
          star = ""
         if(conferences$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
        counter = counter + 1 
-       cat(counter, '. ', star, conferences$Authors[k], ", ", conferences$Year[k], ", '", conferences$Title[k], "', *", conferences$Journal[k], '*', sep='')
+       cat(counter, '. ', star, 
+           str_squish(conferences$Authors[k]), ", ", 
+           str_squish(conferences$Year[k]), ", '", 
+           str_squish(conferences$Title[k]), "', *", 
+           str_squish(conferences$Journal[k]), '*', sep='')
        # add doi if not null
-       if(is.na(conferences$DOI[k])==F){cat(', doi:', conferences$DOI[k], sep='')}
+       if(is.na(conferences$DOI[k])==F){cat(', doi:', str_squish(conferences$DOI[k]), sep='')}
       cat('  \n', sep='') # line break
     }
   }
@@ -180,9 +192,13 @@ if(params$extra.order == 'ARC'){
          star = ""
         if(other$OA[k]==TRUE & params$flag.OA==TRUE){star = star.to.use} # star open access
        counter = counter + 1 
-       cat(counter, '. ', star, other$Authors[k], ", ", other$Year[k], ", '", other$Title[k], "', *", other$Journal[k], '*', sep='')
+       cat(counter, '. ', star, 
+           str_squish(other$Authors[k]), ", ", 
+           str_squish(other$Year[k]), ", '", 
+           str_squish(other$Title[k]), "', *", 
+           str_squish(other$Journal[k]), '*', sep='')
        # add doi if not null
-       if(is.na(other$DOI[k])==F){cat(', doi:', other$DOI[k], sep='')}
+       if(is.na(other$DOI[k])==F){cat(', doi:', str_squish(other$DOI[k]), sep='')}
       cat('  \n', sep='') # line break
     }
   }
